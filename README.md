@@ -7,8 +7,8 @@ Document développeur, à tenir à jour avec le code.
 
 ## Prérequis
 
-- **EterLib 1.5.3+** (`depend`) : base, Redis, langues, menus, Dialogs, sidebar temporaire.
-- **EterTab** (facultatif) : affiche la quête suivie dans la sidebar.
+- **EterLib 1.5.4+** (`depend`) : base, Redis, langues, menus, Dialogs, sidebar temporaire, étiquettes du Tab.
+- **EterTab** (facultatif) : affiche la quête suivie dans la sidebar (Paper) et le métier dans le Tab (`<tag_job>`, Velocity).
 - **Vault + EterEconomy** pour payer (sinon : « économie indisponible »).
 - Client 1.21.6+ pour les Dialogs (quantité, éditeur).
 
@@ -71,6 +71,11 @@ rien en créatif. Action bar à chaque progrès, message quand l'objectif est at
 **Quête suivie** : clic droit sur une quête → elle s'affiche dans la **sidebar** (objectifs et progression en direct,
 « retourne voir ton PNJ » quand tout est prêt). EterMarket ne touche pas au tableau de scores : il dépose le contenu
 dans EterLib (`getSidebars()`), qu'EterTab dessine à la place de sa sidebar. Sans EterTab, pas de sidebar.
+
+**Liste Tab** : à côté du pseudo, le métier et les quêtes encore dispo aujourd'hui (« · Mineur (2) », clé `job.tab`,
+langue par défaut du serveur), envoyés au proxy par EterLib (`getTabTags()`, étiquette `job`) ; EterTab-Velocity
+l'affiche à la place de `<tag_job>`. Mis à jour au chargement des quêtes, à chaque validation et chaque minute (nouveau
+jour).
 
 **Valider** (`JobService#deliver`, clic gauche) : action accomplie et objets présents (simples, sans nom ni
 enchantement) → objets retirés → la base marque la quête faite **une seule fois** (`UPDATE ... WHERE done = FALSE AND

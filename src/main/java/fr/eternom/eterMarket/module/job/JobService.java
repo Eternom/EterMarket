@@ -10,6 +10,7 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -258,7 +259,7 @@ public class JobService {
         return texts;
     }
 
-    public String jobName(Player viewer, String job) {
+    public String jobName(CommandSender viewer, String job) {
         String raw = messages.raw(viewer, "job.name." + job);
         return raw == null ? job : messages.plain(viewer, "job.name." + job);
     }

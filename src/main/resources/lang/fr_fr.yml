@@ -126,6 +126,8 @@ job:
   changed: "<info>Te voilà <accent><job></accent> ! Changement payé <accent><price></accent>."
   change-too-soon: "<error>Tu as changé de métier trop récemment."
   change-not-enough: "<error>Il te faut <accent><price></accent> pour changer de métier."
+  # Liste Tab du réseau, à côté du pseudo (langue par défaut du serveur ; vide = rien) : <job>, <count> = quêtes dispo.
+  tab: " <dark_gray>· <accent><job></accent> <dark_gray>(<info><count></info>)"
   join:
     menu-title: "<primary>Guilde : <job>"
     name: "<accent>Devenir <job>"

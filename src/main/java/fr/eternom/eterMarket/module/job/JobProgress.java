@@ -6,6 +6,7 @@ import fr.eternom.eterLib.helper.sidebar.SidebarOverrides;
 import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.module.job.JobRepository.Quest;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -33,6 +34,8 @@ public class JobProgress {
 
     private static final String SIDEBAR_OWNER = "EterMarket";
     private static final long FLUSH_TICKS = 30 * 20;
+    private static final long TAB_TICKS = 60 * 20;
+    private static final String TAB_TAG = "job";
 
     /** Un progrès pas encore écrit en base. */
     private record Key(UUID player, int slot, long day, String objectives, int target) {
@@ -60,6 +63,8 @@ public class JobProgress {
 
     public void start() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::flushAll, FLUSH_TICKS, FLUSH_TICKS);
+        // Changement de jour : le nombre de quêtes dispo du Tab repasse au plein
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> Bukkit.getOnlinePlayers().forEach(this::publishTab), TAB_TICKS, TAB_TICKS);
         Bukkit.getOnlinePlayers().forEach(this::join); // /reload
     }
 
@@ -103,6 +108,7 @@ public class JobProgress {
         }
         active.put(uuid, new Active(job, merged));
         refreshSidebar(player);
+        publishTab(player);
     }
 
     /** Thread principal : la quête telle que ce serveur la connaît (progression à jour), sinon celle donnée. */
@@ -118,6 +124,7 @@ public class JobProgress {
     void markDone(Player player, Quest quest) {
         replace(player.getUniqueId(), quest.slot(), Quest::withDone);
         refreshSidebar(player);
+        publishTab(player);
     }
 
     // ---------- Actions ----------
@@ -171,6 +178,38 @@ public class JobProgress {
 
     private static Key key(UUID player, Quest quest) {
         return new Key(player, quest.slot(), quest.day(), Objective.format(quest.objectives()), quest.target());
+    }
+
+    // ---------- Liste Tab ----------
+
+    /**
+     * Métier et quêtes encore dispo aujourd'hui à côté du pseudo dans le Tab du réseau (EterLib -> EterTab-Velocity,
+     * <tag_job>), dans la langue par défaut du serveur (la liste est vue par tout le monde). Nouveau jour : toutes les
+     * quêtes du jour sont dispo ; quêtes du jour faites : la bonus compte tant qu'elle n'est pas faite.
+     */
+    private void publishTab(Player player) {
+        Active state = active.get(player.getUniqueId());
+        if (state == null) {
+            return;
+        }
+        long today = service.today();
+        List<Quest> todays = state.quests().stream().filter(q -> q.day() == today).toList();
+        long available;
+        if (todays.isEmpty()) {
+            available = service.jobs().daily().size();
+        } else {
+            available = todays.stream().filter(q -> !q.done()).count();
+            boolean dailyDone = todays.stream().filter(q -> q.slot() < Jobs.BONUS_SLOT).allMatch(Quest::done);
+            boolean hasBonus = todays.stream().anyMatch(q -> q.slot() == Jobs.BONUS_SLOT);
+            if (service.jobs().bonusQuest() && dailyDone && !hasBonus) {
+                available++;
+            }
+        }
+        String format = messages.raw(Bukkit.getConsoleSender(), "job.tab");
+        String value = format == null ? "" : format
+                .replace("<job>", MiniMessage.miniMessage().escapeTags(service.jobName(Bukkit.getConsoleSender(), state.job())))
+                .replace("<count>", String.valueOf(available));
+        EterLib.get().getTabTags().set(player, TAB_TAG, value);
     }
 
     // ---------- Sidebar ----------

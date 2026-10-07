@@ -32,8 +32,8 @@ import java.time.ZoneId;
  */
 public final class Main extends JavaPlugin {
 
-    /** Version minimale d'EterLib : sidebar temporaire (quête suivie) depuis 1.5.3. */
-    private static final String REQUIRED_ETERLIB = "1.5.3";
+    /** Version minimale d'EterLib : étiquettes du Tab (métier) depuis 1.5.4. */
+    private static final String REQUIRED_ETERLIB = "1.5.4";
 
     /** Préfixe des tables d'EterMarket dans la base commune : etermarket_npcs, etermarket_stock... */
     private static final String TABLE_PREFIX = "etermarket_";
