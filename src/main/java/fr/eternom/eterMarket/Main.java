@@ -28,12 +28,12 @@ import java.time.ZoneId;
 
 /**
  * Le marché du réseau : PNJ (Mannequins) définis une fois et placés partout, boutiques (vente seule), stock commun,
- * guilde des métiers (quêtes de livraison quotidiennes) et hôtel des ventes entre joueurs.
+ * guilde des métiers (quêtes quotidiennes de livraison et d'action) et hôtel des ventes entre joueurs.
  */
 public final class Main extends JavaPlugin {
 
-    /** Version minimale d'EterLib : Dialogs communs depuis 1.5.2. */
-    private static final String REQUIRED_ETERLIB = "1.5.2";
+    /** Version minimale d'EterLib : sidebar temporaire (quête suivie) depuis 1.5.3. */
+    private static final String REQUIRED_ETERLIB = "1.5.3";
 
     /** Préfixe des tables d'EterMarket dans la base commune : etermarket_npcs, etermarket_stock... */
     private static final String TABLE_PREFIX = "etermarket_";
@@ -45,6 +45,7 @@ public final class Main extends JavaPlugin {
     private ShopGui shops;
     private Jobs jobs;
     private JobGui jobGui;
+    private JobService jobService;
     private AuctionGui auctions;
 
     @Override
@@ -72,7 +73,7 @@ public final class Main extends JavaPlugin {
         jobs = Jobs.load(getConfig().getConfigurationSection("jobs"), getLogger());
         shops = new ShopGui(this, shopRepository, stock, new ShopService(this, stock, messages), npcs, jobRepository, messages,
                 lib.backButton(getConfig().getString("menus.shop.back-command", "")));
-        JobService jobService = new JobService(this, jobRepository, stock, jobs, messages, zone());
+        jobService = new JobService(this, jobRepository, stock, jobs, messages, zone());
         jobGui = new JobGui(this, jobService, jobRepository, shopRepository, messages,
                 lib.backButton(getConfig().getString("menus.jobs.back-command", "")));
         // Boutiques et guilde se renvoient l'une à l'autre (onglets Quêtes / Boutique, éditeurs)
@@ -89,10 +90,14 @@ public final class Main extends JavaPlugin {
         new Commands(this);
         new Events(this);
         npcs.start();
+        jobService.progress().start();
     }
 
     @Override
     public void onDisable() {
+        if (jobService != null) {
+            jobService.progress().stop();
+        }
         if (spawner != null) {
             spawner.despawnAll();
         }
@@ -124,6 +129,10 @@ public final class Main extends JavaPlugin {
 
     public JobGui getJobGui() {
         return jobGui;
+    }
+
+    public JobService getJobService() {
+        return jobService;
     }
 
     public AuctionGui getAuctions() {

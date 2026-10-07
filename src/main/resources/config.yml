@@ -12,17 +12,24 @@
 #    /market edit <pnj>                 ouvre l'éditeur (aussi : Maj + clic droit sur le PNJ)
 #  Les textes sont dans lang/. Toute modification nécessite un redémarrage du serveur.
 
-# Guilde des métiers : chaque joueur a UN métier, et reçoit chaque jour des quêtes de
-# livraison au PNJ de son métier. Les objets livrés vont dans le stock commun, la
-# récompense est le principal revenu du serveur (voir « Repères économiques » d'EterEconomy).
+# Guilde des métiers : chaque joueur a UN métier, et reçoit chaque jour des quêtes au PNJ de
+# son métier : objets à livrer (parfois plusieurs, en commande) et actions à faire (tuer,
+# casser, pêcher). Les objets livrés vont dans le stock commun, la récompense est le
+# principal revenu du serveur (voir « Repères économiques » d'EterEconomy).
+# Le répertoire des quêtes se gère en jeu ; /market jobs reset <métier> confirm le remet à
+# celui de départ.
 jobs:
   # Les quêtes changent à minuit dans ce fuseau.
   time-zone: Europe/Paris
-  # Quêtes par jour (1 à 3).
-  quests-per-day: 3
-  # Une quête bonus, mieux payée, une fois les quêtes du jour faites.
+  # Niveaux des quêtes du jour, dans l'ordre (3 au plus) : easy, normal, hard.
+  daily: [easy, normal, hard]
+  # Une quête bonus, mieux payée, une fois les quêtes du jour faites : son niveau et son bonus.
   bonus-quest: true
-  bonus-multiplier: 1.5
+  bonus-tier: normal
+  bonus-multiplier: 1.3
+  # Changer une quête pas encore faite contre une autre du même niveau, une fois par jour :
+  # prix (0 = gratuit, -1 = désactivé).
+  reroll-cost: 150
   # Changer de métier (le premier choix est gratuit) : prix, et délai entre deux changements.
   change-cost: 2000
   change-cooldown-days: 7

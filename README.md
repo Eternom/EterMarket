@@ -1,13 +1,14 @@
 # EterMarket
 
-Le marché du réseau : **PNJ boutiques**, **stock commun**, **guilde des métiers** (quêtes de livraison quotidiennes,
+Le marché du réseau : **PNJ boutiques**, **stock commun**, **guilde des métiers** (quêtes quotidiennes de livraison et d'action,
 le vrai revenu du serveur) et **hôtel des ventes** (entre joueurs, sur un PNJ).
 Conception complète : voir la mémoire de projet et les « Repères économiques » d'EterEconomy.
 Document développeur, à tenir à jour avec le code.
 
 ## Prérequis
 
-- **EterLib 1.5.2+** (`depend`) : base, Redis, langues, menus, Dialogs.
+- **EterLib 1.5.3+** (`depend`) : base, Redis, langues, menus, Dialogs, sidebar temporaire.
+- **EterTab** (facultatif) : affiche la quête suivie dans la sidebar.
 - **Vault + EterEconomy** pour payer (sinon : « économie indisponible »).
 - Client 1.21.6+ pour les Dialogs (quantité, éditeur).
 
@@ -45,22 +46,49 @@ stock oui/non, nom et skin du PNJ.
 **Un métier par joueur** (`etermarket_job_members`) parmi `jobs.list` (Mineur, Bûcheron, Fermier, Chasseur, Pêcheur).
 Le premier est gratuit ; en changer coûte `change-cost` (2 000) et n'est possible qu'une fois par
 `change-cooldown-days` (7). On le choisit au PNJ de référence du métier (`/market create <pnj> job <métier>`).
+La table compte aussi les quêtes accomplies de chaque joueur (base de futurs niveaux).
 
-**Quêtes du jour** (`etermarket_job_quests`) : à minuit (`jobs.time-zone`), `quests-per-day` (3) quêtes tirées au hasard
-dans le **répertoire** du métier (`etermarket_job_catalog`, recopiées : modifier le répertoire ne change pas les quêtes
-déjà tirées), puis une **quête bonus** (récompense × `bonus-multiplier`) quand elles sont faites. Uniquement des
-**livraisons** : la validation vérifie que le joueur a les objets (simples, sans nom ni enchantement) et les lui prend.
+**Répertoire** (`etermarket_job_templates`) : les quêtes possibles de chaque métier, avec un **niveau** (`Tier` :
+facile, normale, difficile), une récompense et des **objectifs** (`Objective`, en base `KIND:CIBLE:QUANTITÉ;...`) :
+- `ITEM` : objets à livrer, un ou plusieurs (« commande » : 8 fer + 4 or + 16 charbon) ;
+- `KILL`, `BREAK`, `FISH` : tuer, casser, pêcher, **au plus une action par quête** (une seule progression), éventuellement
+  avec des objets (« tue 15 araignées et rapporte 16 ficelles »). Cible `ANY` : n'importe quel monstre / prise.
 
-**Valider** (`JobService#deliver`) : objets retirés → la base marque la quête faite **une seule fois**
-(`UPDATE ... WHERE done = FALSE`) → objets versés dans le **stock commun** → récompense par Vault. Quête déjà faite
-(double clic, autre serveur) : objets rendus.
+**Quêtes du jour** (`etermarket_job_daily`) : à minuit (`jobs.time-zone`), une quête par niveau de `daily`
+(facile, normale, difficile ; un niveau vide prend dans les autres), recopiées depuis le répertoire (le modifier ne
+change pas les quêtes tirées), puis une **quête bonus** de niveau `bonus-tier` (récompense × `bonus-multiplier`) quand
+elles sont faites. **Changer une quête** pas encore faite contre une autre du même niveau : une fois par jour
+(`reroll_day`, réservé en SQL avant de payer), pour `reroll-cost` (150) : une sortie d'argent.
+
+**Actions** (`JobProgress`, `JobProgressListener`) : comptées sur le thread principal pour les joueurs connectés
+(quêtes chargées à la connexion), écrites en base par paquets toutes les 30 s, à la déconnexion et avant chaque
+validation, en **ajoutant** (`progress = LEAST(cible, progress + n)`) : deux serveurs ne s'écrasent pas. La clé d'un
+progrès inclut les objectifs : celui d'une quête changée entre-temps ne compte pas pour la nouvelle. Contre la triche :
+créatures apparues naturellement seulement (pas de spawner, d'œuf, d'élevage, de commande) et tuées par le joueur ;
+blocs posés par un joueur ignorés (retenus en mémoire sur le serveur, 200 000 au plus) ; cultures seulement mûres ;
+rien en créatif. Action bar à chaque progrès, message quand l'objectif est atteint.
+
+**Quête suivie** : clic droit sur une quête → elle s'affiche dans la **sidebar** (objectifs et progression en direct,
+« retourne voir ton PNJ » quand tout est prêt). EterMarket ne touche pas au tableau de scores : il dépose le contenu
+dans EterLib (`getSidebars()`), qu'EterTab dessine à la place de sa sidebar. Sans EterTab, pas de sidebar.
+
+**Valider** (`JobService#deliver`, clic gauche) : action accomplie et objets présents (simples, sans nom ni
+enchantement) → objets retirés → la base marque la quête faite **une seule fois** (`UPDATE ... WHERE done = FALSE AND
+progress >= cible`) → objets versés dans le **stock commun** → récompense par Vault. Refus (double clic, autre
+serveur) : objets rendus.
 
 **Le PNJ de métier** ouvre la guilde (rejoindre) ou les quêtes du jour ; un onglet mène à sa **boutique** (objets utiles
-au métier, même éditeur que les boutiques). **Répertoire de départ** (`Jobs#defaults`) posé au premier démarrage,
-modifiable dans l'éditeur (Maj + clic droit, bouton « Répertoire des quêtes ») : 150 à 250 Heloks par quête.
+au métier, même éditeur que les boutiques). **Répertoire de départ** (`Jobs#defaults`, 16 à 18 quêtes par métier) posé
+au premier démarrage ; `/market jobs reset <métier> confirm` y revient. Repères : facile 100-130, normale 160-200,
+difficile 250-300 ; une journée complète ≈ 800.
 
-**Contrôle d'arbitrage** : les deux éditeurs affichent en rouge un objet vendu en boutique moins cher **à l'unité** que
-ce que sa livraison rapporte (on achèterait pour livrer). Repères : « Repères économiques » d'EterEconomy.
+**Éditeur du répertoire** (Maj + clic droit sur le PNJ, bouton « Répertoire des quêtes ») : nouvelle quête de
+livraison (objet en main) ou d'action (Dialog : action, cible, quantité, niveau, récompense) ; clic gauche = niveau,
+récompense et quantités (0 retire un objectif) ; Maj + clic = ajouter l'objet en main à la quête ; clic droit = retirer.
+
+**Contrôle d'arbitrage** : le répertoire affiche en rouge une quête dont **tous** les objets s'achètent en boutique pour
+moins que sa récompense ; l'éditeur de boutique, un objet vendu moins cher à l'unité que sa part de récompense (la
+récompense partagée entre les objets demandés). Repères : « Repères économiques » d'EterEconomy.
 
 ## Hôtel des ventes (`module/auction`)
 
@@ -97,6 +125,7 @@ jamais (il est entre joueurs).
 | `/market edit <pnj>` | Éditeur de la boutique |
 | `/market delete <pnj> confirm` | Supprime le PNJ partout, avec ses emplacements et sa boutique |
 | `/market list` · `/market reload` | Liste · rechargement |
+| `/market jobs reset <métier> confirm` | Remet le répertoire de quêtes de départ du métier (efface les modifications) |
 
 `/market` : `etermarket.admin` (op). Éditeur au clic : `etermarket.edit` (dans `etermarket.admin`).
 Pas de `/shop` : les joueurs vont voir les PNJ.

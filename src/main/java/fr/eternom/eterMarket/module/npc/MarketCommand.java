@@ -1,6 +1,8 @@
 package fr.eternom.eterMarket.module.npc;
 
 import fr.eternom.eterLib.helper.message.Messages;
+import fr.eternom.eterLib.helper.task.Tasks;
+import fr.eternom.eterMarket.module.job.JobService;
 import fr.eternom.eterMarket.module.job.Jobs;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Role;
 import fr.eternom.eterMarket.module.shop.ShopGui;
@@ -9,6 +11,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 import java.util.Locale;
@@ -16,23 +19,29 @@ import java.util.stream.Stream;
 
 /**
  * /market (staff, etermarket.admin) :
- * create <pnj> [job <métier> | auction] · place <pnj> · remove (le plus proche) · edit <pnj> · delete <pnj> confirm · list · reload.
+ * create <pnj> [job <métier> | auction] · place <pnj> · remove (le plus proche) · edit <pnj> · delete <pnj> confirm · list · reload
+ * · jobs reset <métier> confirm (remet le répertoire de quêtes de départ du métier).
  */
 public class MarketCommand implements TabExecutor {
 
-    private static final List<String> ACTIONS = List.of("create", "place", "remove", "edit", "delete", "list", "reload");
+    private static final List<String> ACTIONS = List.of("create", "place", "remove", "edit", "delete", "list", "reload", "jobs");
 
     private final NpcService npcs;
     private final ShopGui shops;
     private final ShopRepository shopRepository;
+    private final JavaPlugin plugin;
+    private final JobService jobService;
     private final Jobs jobs;
     private final Messages messages;
 
-    public MarketCommand(NpcService npcs, ShopGui shops, ShopRepository shopRepository, Jobs jobs, Messages messages) {
+    public MarketCommand(JavaPlugin plugin, NpcService npcs, ShopGui shops, ShopRepository shopRepository, JobService jobService,
+                         Messages messages) {
+        this.plugin = plugin;
+        this.jobService = jobService;
         this.npcs = npcs;
         this.shops = shops;
         this.shopRepository = shopRepository;
-        this.jobs = jobs;
+        this.jobs = jobService.jobs();
         this.messages = messages;
     }
 
@@ -69,6 +78,7 @@ public class MarketCommand implements TabExecutor {
                     shops.openEditor(player, id, 0);
                 }
             }
+            case "jobs" -> resetJob(sender, args);
             case "remove" -> {
                 if (sender instanceof Player player) {
                     npcs.removeNearest(player);
@@ -79,6 +89,17 @@ public class MarketCommand implements TabExecutor {
             default -> messages.send(sender, "npc.usage");
         }
         return true;
+    }
+
+    /** jobs reset <métier> confirm : efface le répertoire du métier et remet celui de départ. */
+    private void resetJob(CommandSender sender, String[] args) {
+        String job = args.length > 2 ? args[2].toLowerCase(Locale.ROOT) : "";
+        if (args.length < 4 || !args[1].equalsIgnoreCase("reset") || !args[3].equalsIgnoreCase("confirm") || !jobs.exists(job)) {
+            messages.send(sender, "catalog.reset-usage", "jobs", String.join(", ", jobs.icons().keySet()));
+            return;
+        }
+        Tasks.async(plugin, () -> messages.send(sender, jobService.resetCatalog(job) ? "catalog.reset" : "catalog.reset-none",
+                "job", job), "Répertoire de quêtes non remis à zéro");
     }
 
     /** create <pnj> : boutique ; create <pnj> job <métier> : PNJ d'un métier ; create <pnj> auction : hôtel des ventes. */
@@ -113,6 +134,14 @@ public class MarketCommand implements TabExecutor {
         }
         if (args.length == 4 && action.equals("create") && args[2].equalsIgnoreCase("job")) {
             return filter(jobs.icons().keySet().stream(), args[3]);
+        }
+        if (action.equals("jobs")) {
+            return switch (args.length) {
+                case 2 -> filter(Stream.of("reset"), args[1]);
+                case 3 -> filter(jobs.icons().keySet().stream(), args[2]);
+                case 4 -> filter(Stream.of("confirm"), args[3]);
+                default -> List.of();
+            };
         }
         if (args.length == 3 && action.equals("delete")) {
             return filter(Stream.of("confirm"), args[2]);

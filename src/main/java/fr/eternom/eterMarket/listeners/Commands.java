@@ -9,7 +9,7 @@ import java.util.Objects;
 public class Commands {
 
     public Commands(Main main) {
-        MarketCommand market = new MarketCommand(main.getNpcs(), main.getShops(), main.getShopRepository(), main.getJobs(), main.getMessages());
+        MarketCommand market = new MarketCommand(main, main.getNpcs(), main.getShops(), main.getShopRepository(), main.getJobService(), main.getMessages());
         PluginCommand command = Objects.requireNonNull(main.getCommand("market"), "Commande absente du plugin.yml : market");
         command.setExecutor(market);
         command.setTabCompleter(market);

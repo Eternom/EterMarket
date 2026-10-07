@@ -89,7 +89,7 @@ public class ShopGui {
             // Éditeur : meilleure récompense par unité de chaque matière dans les quêtes (contrôle d'arbitrage)
             Map<Material, Double> bestReward = new HashMap<>();
             if (editor) {
-                jobs.catalog().forEach(template -> bestReward.merge(template.material(), template.reward() / template.amount(), Math::max));
+                jobs.catalog().forEach(template -> template.unitRewards().forEach((material, reward) -> bestReward.merge(material, reward, Math::max)));
             }
             return new View(npc, items, amounts, economy == null ? 0 : economy.getBalance(player), bestReward);
         }, then, () -> messages.send(player, "error.generic"));

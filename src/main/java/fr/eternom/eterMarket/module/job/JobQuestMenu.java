@@ -8,8 +8,6 @@ import fr.eternom.eterMarket.module.job.JobRepository.Quest;
 import fr.eternom.eterMarket.module.job.JobService.Board;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Npc;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -27,12 +25,13 @@ import java.util.Set;
 /**
  * Quêtes du jour au PNJ du métier, 5 lignes :
  * <pre>
- *  ▣ ▣ ▢ ▢ ☺ ▢ ▢ ▣ ▣     ☺ = joueur (métier, quêtes faites, temps avant les suivantes)
+ *  ▣ ▣ ▢ ▢ ☺ ▢ ▢ ▣ ▣     ☺ = joueur (métier, quêtes faites, quêtes accomplies, temps avant les suivantes)
  *  ▣ · · · · · · · ▣
- *  ▢ · 1 · 2 · 3 · ▢     quêtes du jour : objet à livrer, quantité, récompense, ce que tu en as ; clic = valider
+ *  ▢ · 1 · 2 · 3 · ▢     quêtes du jour (facile, normale, difficile) : objectifs et progression, récompense
  *  ▣ · · · ★ · · · ▣     ★ = quête bonus (débloquée quand les 3 sont faites)
  *  ▣ ▣ ▢ $ « ▢ ▢ ▣ ▣     $ = boutique du métier · « = retour ou fermer
  * </pre>
+ * Sur une quête : clic gauche = valider, clic droit = la suivre dans la sidebar, Maj + clic = la changer (une par jour).
  */
 class JobQuestMenu implements Menu {
 
@@ -45,6 +44,7 @@ class JobQuestMenu implements Menu {
 
     private final JobGui gui;
     private final Messages messages;
+    private final QuestTexts texts;
     private final Player viewer;
     private final Npc npc;
     private final Board.Quests board;
@@ -54,6 +54,7 @@ class JobQuestMenu implements Menu {
     JobQuestMenu(JobGui gui, Player viewer, Npc npc, Board.Quests board) {
         this.gui = gui;
         this.messages = gui.messages();
+        this.texts = gui.texts();
         this.viewer = viewer;
         this.npc = npc;
         this.board = board;
@@ -67,6 +68,16 @@ class JobQuestMenu implements Menu {
         if (quest != null) {
             if (quest.done()) {
                 player.playSound(player, Sound.ENTITY_VILLAGER_NO, 0.6f, 1f);
+            } else if (click.isShiftClick()) {
+                if (!board.canReroll()) {
+                    player.playSound(player, Sound.ENTITY_VILLAGER_NO, 0.6f, 1f);
+                    return;
+                }
+                Sounds.click(player);
+                gui.confirmReroll(player, npc, board, quest);
+            } else if (click.isRightClick()) {
+                Sounds.click(player);
+                gui.toggleTrack(player, npc, board, quest);
             } else {
                 Sounds.click(player);
                 player.closeInventory();
@@ -95,10 +106,15 @@ class JobQuestMenu implements Menu {
         }
         List<Quest> daily = board.quests().stream().filter(quest -> quest.slot() < Jobs.BONUS_SLOT).toList();
         long done = daily.stream().filter(Quest::done).count();
-        inventory.setItem(INFO, Items.head(viewer.getPlayerProfile(), text("quest.menu.player", "player", viewer.getName()), List.of(
-                text("quest.menu.job", "job", gui.service().jobName(viewer, board.job())),
-                text("quest.menu.progress", "done", String.valueOf(done), "total", String.valueOf(daily.size())),
-                text("quest.menu.reset", "time", gui.timeUntilTomorrow(viewer)))));
+        List<Component> head = new ArrayList<>();
+        head.add(text("quest.menu.job", "job", gui.service().jobName(viewer, board.job())));
+        head.add(text("quest.menu.progress", "done", String.valueOf(done), "total", String.valueOf(daily.size())));
+        head.add(text("quest.menu.completed", "count", String.valueOf(board.completed())));
+        if (gui.service().jobs().rerollEnabled()) {
+            head.add(text(board.canReroll() ? "quest.menu.reroll-ready" : "quest.menu.reroll-used"));
+        }
+        head.add(text("quest.menu.reset", "time", gui.timeUntilTomorrow(viewer)));
+        inventory.setItem(INFO, Items.head(viewer.getPlayerProfile(), text("quest.menu.player", "player", viewer.getName()), head));
 
         for (Quest quest : daily) {
             if (quest.slot() < QUEST_SLOTS.size()) {
@@ -119,30 +135,30 @@ class JobQuestMenu implements Menu {
 
     private void place(int slot, Quest quest) {
         questAtSlot.put(slot, quest);
-        boolean bonus = quest.slot() == Jobs.BONUS_SLOT;
-        int owned = JobService.count(viewer.getInventory(), quest.material());
-        boolean ready = !quest.done() && owned >= quest.amount();
-        Component item = Component.translatable(quest.material().translationKey());
+        boolean ready = QuestTexts.ready(viewer, quest);
         List<Component> lore = new ArrayList<>();
+        for (Objective objective : quest.objectives()) {
+            Component line = quest.done() ? texts.label(viewer, objective) : texts.objective(viewer, objective, QuestTexts.have(viewer, quest, objective));
+            lore.add(text("quest.item.objective").append(line));
+        }
         lore.add(text("quest.item.reward", "reward", gui.money(quest.reward())));
         if (quest.done()) {
             lore.add(text("quest.item.done"));
         } else {
-            lore.add(text(ready ? "quest.item.owned-enough" : "quest.item.owned", "owned", String.valueOf(Math.min(owned, quest.amount())),
-                    "amount", String.valueOf(quest.amount())));
+            if (quest.tracked()) {
+                lore.add(text("quest.item.tracked"));
+            }
             lore.add(Component.empty());
             lore.add(text(ready ? "quest.item.deliver" : "quest.item.gather"));
+            lore.add(text(quest.tracked() ? "quest.item.untrack" : "quest.item.track"));
+            if (board.canReroll()) {
+                lore.add(text("quest.item.reroll", "price", gui.service().jobs().rerollCost() > 0
+                        ? gui.money(gui.service().jobs().rerollCost()) : messages.plain(viewer, "quest.reroll.free")));
+            }
         }
-        Component name = messages.render(raw(bonus ? "quest.item.name-bonus" : "quest.item.name"),
-                TagResolver.resolver(Placeholder.component("item", item)), "amount", String.valueOf(quest.amount()));
-        ItemStack icon = Items.item(quest.done() ? Material.LIME_DYE : quest.material(), name, lore, ready);
-        icon.setAmount(Math.clamp(quest.amount(), 1, icon.getMaxStackSize()));
-        inventory.setItem(slot, icon);
-    }
-
-    private String raw(String key) {
-        String raw = messages.raw(viewer, key);
-        return raw == null ? key : raw;
+        Material icon = quest.done() ? Material.LIME_DYE : quest.objectives().getFirst().icon();
+        ItemStack item = Items.item(icon, texts.name(viewer, quest), lore, ready || quest.tracked());
+        inventory.setItem(slot, item);
     }
 
     private Component text(String key, String... placeholders) {
