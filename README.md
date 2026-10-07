@@ -1,7 +1,7 @@
 # EterMarket
 
-Le marché du réseau : **PNJ boutiques**, **stock commun** et **guilde des métiers** (quêtes de livraison quotidiennes,
-le vrai revenu du serveur). À venir : l'**hôtel des ventes** (entre joueurs, sur un PNJ).
+Le marché du réseau : **PNJ boutiques**, **stock commun**, **guilde des métiers** (quêtes de livraison quotidiennes,
+le vrai revenu du serveur) et **hôtel des ventes** (entre joueurs, sur un PNJ).
 Conception complète : voir la mémoire de projet et les « Repères économiques » d'EterEconomy.
 Document développeur, à tenir à jour avec le code.
 
@@ -62,10 +62,26 @@ modifiable dans l'éditeur (Maj + clic droit, bouton « Répertoire des quêtes 
 **Contrôle d'arbitrage** : les deux éditeurs affichent en rouge un objet vendu en boutique moins cher **à l'unité** que
 ce que sa livraison rapporte (on achèterait pour livrer). Repères : « Repères économiques » d'EterEconomy.
 
+## Hôtel des ventes (`module/auction`)
+
+Sur un PNJ (`/market create <pnj> auction`), **entre joueurs**, commun à tout le réseau, **sans lien avec le stock
+commun**. Tables : `etermarket_auction_listings` (annonces en cours) et `etermarket_auction_collection` (boîte de
+récupération). Chaque sortie d'une annonce passe par un `DELETE ... WHERE id = ?` : un seul gagnant.
+
+- **Vendre** l'objet en main (prix dans un Dialog) : l'objet quitte la main tout de suite → limite d'annonces
+  (`etermarket.auction.listings.<n>`, sinon `default-listings`) → frais de mise en vente (`listing-fee`, 1 Helok
+  minimum) → annonce écrite. Au moindre refus, l'objet est rendu. Prix entre `min-price` et `max-price`.
+- **Acheter** (confirmation) : l'acheteur paie → l'annonce est réservée ; perdue = acheteur remboursé. Le vendeur
+  reçoit le prix moins `tax`, même hors ligne, et est prévenu où qu'il soit (Redis, canal `etermarket:auction`).
+- **Retirer** une annonce depuis « Mes ventes » ; les **expirées** (`duration-hours`) passent dans la boîte de leur
+  vendeur (tâche chaque minute, sur chaque serveur, sans doublon grâce au `DELETE`).
+- **Boîte de récupération** : invendus, annonces retirées, achats sans place. Un colis ne se prend que s'il rentre.
+- **Recherche** par nom d'objet ou de matière ; clic droit sur la loupe pour l'effacer.
+
 ## Stock commun (`module/stock`)
 
 **Un seul stock pour tout** (toutes les boutiques, tous les serveurs), par matière (`etermarket_stock`). Les livraisons
-des quêtes l'alimenteront toujours ; une boutique n'y puise que si elle est réglée « vente sur stock » (sinon :
+des quêtes l'alimentent toujours ; une boutique n'y puise que si elle est réglée « vente sur stock » (sinon :
 illimitée). Seuls les objets simples (sans nom ni enchantement) passent par le stock. L'hôtel des ventes n'y touchera
 jamais (il est entre joueurs).
 
@@ -75,6 +91,7 @@ jamais (il est entre joueurs).
 |---|---|
 | `/market create <pnj>` | Crée une boutique (une fois pour tout le réseau) |
 | `/market create <pnj> job <métier>` | Crée le PNJ de référence d'un métier |
+| `/market create <pnj> auction` | Crée un PNJ hôtel des ventes |
 | `/market place <pnj>` | Le place là où tu es |
 | `/market remove` | Retire l'emplacement le plus proche (5 blocs) |
 | `/market edit <pnj>` | Éditeur de la boutique |

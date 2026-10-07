@@ -21,7 +21,8 @@ npc:
   role:
     shop: "<info>Boutique"
     job: "<info>Guilde : <job>"
-  create-usage: '<error>Utilisation : <accent>/market create \<pnj></accent> (boutique) ou <accent>/market create \<pnj> job \<métier></accent> (<jobs>)'
+    auction: "<info>Hôtel des ventes"
+  create-usage: '<error>Utilisation : <accent>/market create \<pnj></accent> (boutique), <accent>/market create \<pnj> job \<métier></accent> (<jobs>) ou <accent>/market create \<pnj> auction</accent> (hôtel des ventes)'
   usage: '<error>Utilisation : <accent>/market \<create|place|remove|edit|delete|list|reload> [pnj]'
   invalid-id: "<error>Identifiant invalide : minuscules, chiffres, _ et - (32 caractères max)."
   exists: "<error>Le PNJ <accent><npc></accent> existe déjà."
@@ -192,3 +193,74 @@ catalog:
   remove:
     title: "<primary>Retirer la quête"
     body: "Retirer cette quête du répertoire ? Les quêtes déjà tirées aujourd'hui restent."
+
+auction:
+  hold-item: "<error>Tiens en main l'objet à vendre."
+  price-invalid: "<error>Prix invalide."
+  price-range: "<error>Le prix doit être entre <accent><min></accent> et <accent><max></accent>."
+  listed: "<info>Mis en vente pour <accent><price></accent> <dark_gray>(frais : <fee>)"
+  limit: "<error>Tu as déjà <accent><limit></accent> annonces en cours : retire-en une ou attends qu'elles se vendent."
+  fee-not-enough: "<error>Il te faut <accent><fee></accent> de frais de mise en vente : ton objet t'est rendu."
+  own-listing: "<error>C'est ton annonce : retire-la depuis « Mes ventes »."
+  bought: "<info>Acheté pour <accent><price></accent> à <accent><seller></accent>."
+  not-enough: "<error>Il te faut <accent><price></accent> pour cet achat."
+  gone: "<error>Cette annonce n'est plus disponible."
+  cancelled: "<info>Annonce retirée : l'objet t'est rendu."
+  no-space: "<error>Pas assez de place dans ton inventaire."
+  to-collection: "<info>Pas de place : l'objet t'attend dans ta <accent>boîte de récupération</accent>."
+  sold: "<info>Vendu : <accent><item></accent> ! <accent>+<amount></accent> <dark_gray>(taxe déduite)"
+  back: "<accent>« Hôtel des ventes"
+  sell:
+    title: "<primary>Vendre"
+    body: "Prix de vente. Frais de mise en vente : <fee> % (non remboursés). Taxe sur la vente : <tax> %. Durée : <duration>."
+    label: "Prix"
+    confirm: "Mettre en vente"
+  buy:
+    title: "<primary>Acheter"
+    body: "Acheter pour <price> à <seller> ?"
+    confirm: "Acheter"
+  cancel:
+    title: "<primary>Retirer l'annonce"
+    body: "Retirer cette annonce ? L'objet te revient, les frais ne sont pas remboursés."
+    confirm: "<error>Retirer"
+  search:
+    title: "<primary>Rechercher"
+    body: "Une partie du nom de l'objet (ex : diamant, épée, enchanté)."
+    label: "Recherche"
+    confirm: "Rechercher"
+  menu:
+    title: "<primary>Hôtel des ventes"
+    title-search: "<primary>Hôtel des ventes <dark_gray>· <query>"
+    player: "<accent><player>"
+    balance: "<dark_gray>▸ <info>Solde : <accent><amount>"
+    listings: "<dark_gray>▸ <info>Mes annonces : <accent><count></accent><dark_gray>/</dark_gray><accent><limit>"
+    parcels: "<dark_gray>▸ <info>À récupérer : <accent><count>"
+    empty: "<info>Aucune annonce pour le moment"
+    empty-search: "<info>Aucune annonce pour cette recherche"
+    search: "<accent>Rechercher"
+    search-lore: "<info>Filtrer par nom d'objet"
+    search-clear: "<accent>Clic droit <dark_gray>· <info>effacer la recherche"
+    mine: "<accent>Mes ventes"
+    mine-lore: "<info>Voir et retirer mes annonces"
+    sell: "<success>Vendre l'objet en main"
+    sell-lore: "<info>Choisis ton prix"
+    collection: "<accent>Boîte de récupération"
+  item:
+    price: "<dark_gray>▸ <info>Prix : <accent><price>"
+    seller: "<dark_gray>▸ <info>Vendeur : <accent><seller>"
+    time: "<dark_gray>▸ <info>Reste : <accent><time>"
+    expired: "<dark_gray>▸ <error>Expirée (bientôt dans ta boîte)"
+    buy: "<accent>Clic <dark_gray>· <info>acheter"
+    yours: "<dark_gray>Ton annonce"
+  mine:
+    title: "<primary>Mes ventes"
+    empty: "<info>Aucune annonce en cours"
+    cancel: "<accent>Clic <dark_gray>· <info>retirer l'annonce"
+  collection:
+    title: "<primary>Boîte de récupération"
+    empty: "<info>Rien à récupérer"
+    take: "<accent>Clic <dark_gray>· <info>récupérer"
+    reason:
+      expired: "<dark_gray>▸ <info>Invendu"
+      cancelled: "<dark_gray>▸ <info>Annonce retirée"
+      bought: "<dark_gray>▸ <info>Acheté (pas de place)"

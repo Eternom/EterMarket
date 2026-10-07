@@ -1,5 +1,6 @@
 package fr.eternom.eterMarket.module.npc;
 
+import fr.eternom.eterMarket.module.auction.AuctionGui;
 import fr.eternom.eterMarket.module.job.JobGui;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Role;
 import fr.eternom.eterMarket.module.shop.ShopGui;
@@ -11,7 +12,7 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 
 /**
- * Clic droit sur un PNJ : sa boutique, ou la guilde de son métier (PNJ de métier) ; Maj + clic droit avec
+ * Clic droit sur un PNJ : sa boutique, la guilde de son métier (PNJ de métier) ou l'hôtel des ventes ; Maj + clic droit avec
  * etermarket.edit : son éditeur.
  * Chargement d'un chunk : ses PNJ apparaissent.
  */
@@ -20,11 +21,13 @@ public class NpcListener implements Listener {
     private final NpcSpawner spawner;
     private final ShopGui shops;
     private final JobGui jobs;
+    private final AuctionGui auctions;
 
-    public NpcListener(NpcSpawner spawner, ShopGui shops, JobGui jobs) {
+    public NpcListener(NpcSpawner spawner, ShopGui shops, JobGui jobs, AuctionGui auctions) {
         this.spawner = spawner;
         this.shops = shops;
         this.jobs = jobs;
+        this.auctions = auctions;
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -39,6 +42,8 @@ public class NpcListener implements Listener {
                 shops.openEditor(player, npc.id(), 0);
             } else if (npc.role() == Role.JOB) {
                 jobs.open(player, npc);
+            } else if (npc.role() == Role.AUCTION) {
+                auctions.open(player);
             } else {
                 shops.open(player, npc.id(), 0);
             }

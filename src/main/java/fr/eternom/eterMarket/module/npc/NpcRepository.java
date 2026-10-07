@@ -21,8 +21,8 @@ public class NpcRepository {
     private static final String NPCS = "npcs";
     private static final String PLACEMENTS = "placements";
 
-    /** Rôle d'un PNJ : boutique, ou PNJ de référence d'un métier (quêtes + boutique du métier). */
-    public enum Role { SHOP, JOB }
+    /** Rôle d'un PNJ : boutique, PNJ de référence d'un métier (quêtes + boutique du métier), ou hôtel des ventes. */
+    public enum Role { SHOP, JOB, AUCTION }
 
     /**
      * @param name     nom affiché au-dessus de la tête (MiniMessage)

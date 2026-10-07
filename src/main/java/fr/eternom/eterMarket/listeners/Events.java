@@ -6,6 +6,6 @@ import fr.eternom.eterMarket.module.npc.NpcListener;
 public class Events {
 
     public Events(Main main) {
-        main.getServer().getPluginManager().registerEvents(new NpcListener(main.getSpawner(), main.getShops(), main.getJobGui()), main);
+        main.getServer().getPluginManager().registerEvents(new NpcListener(main.getSpawner(), main.getShops(), main.getJobGui(), main.getAuctions()), main);
     }
 }

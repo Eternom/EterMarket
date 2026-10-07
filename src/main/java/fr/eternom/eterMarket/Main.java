@@ -6,6 +6,9 @@ import fr.eternom.eterLib.helper.sql.Database;
 import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.listeners.Commands;
 import fr.eternom.eterMarket.listeners.Events;
+import fr.eternom.eterMarket.module.auction.AuctionGui;
+import fr.eternom.eterMarket.module.auction.AuctionRepository;
+import fr.eternom.eterMarket.module.auction.AuctionService;
 import fr.eternom.eterMarket.module.job.JobGui;
 import fr.eternom.eterMarket.module.job.JobRepository;
 import fr.eternom.eterMarket.module.job.JobService;
@@ -20,11 +23,12 @@ import fr.eternom.eterMarket.module.stock.StockRepository;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.time.DateTimeException;
+import java.time.Duration;
 import java.time.ZoneId;
 
 /**
  * Le marché du réseau : PNJ (Mannequins) définis une fois et placés partout, boutiques (vente seule), stock commun,
- * guilde des métiers (quêtes de livraison quotidiennes). Viendra ensuite l'hôtel des ventes.
+ * guilde des métiers (quêtes de livraison quotidiennes) et hôtel des ventes entre joueurs.
  */
 public final class Main extends JavaPlugin {
 
@@ -41,6 +45,7 @@ public final class Main extends JavaPlugin {
     private ShopGui shops;
     private Jobs jobs;
     private JobGui jobGui;
+    private AuctionGui auctions;
 
     @Override
     public void onEnable() {
@@ -74,6 +79,12 @@ public final class Main extends JavaPlugin {
         shops.linkJobs(jobGui::open, jobGui::openCatalog);
         jobGui.linkShops((player, npc) -> shops.open(player, npc.id(), 0), (player, npc) -> shops.openEditor(player, npc.id(), 0));
         Tasks.async(this, jobService::seedCatalogs, "Répertoire de quêtes de départ non posé");
+
+        AuctionRepository auctionRepository = new AuctionRepository(database);
+        AuctionService auctionService = new AuctionService(this, auctionRepository, auctionSettings(), lib.getMessenger(), messages);
+        auctions = new AuctionGui(this, auctionRepository, auctionService, messages,
+                lib.backButton(getConfig().getString("menus.auction.back-command", "")));
+        auctionService.start();
 
         new Commands(this);
         new Events(this);
@@ -113,6 +124,21 @@ public final class Main extends JavaPlugin {
 
     public JobGui getJobGui() {
         return jobGui;
+    }
+
+    public AuctionGui getAuctions() {
+        return auctions;
+    }
+
+    /** config.yml > auction : durée, frais, taxe, prix min/max, annonces par défaut. */
+    private AuctionService.Settings auctionSettings() {
+        return new AuctionService.Settings(
+                Duration.ofHours(Math.max(1, getConfig().getInt("auction.duration-hours", 48))),
+                Math.clamp(getConfig().getDouble("auction.listing-fee", 0.01), 0, 1),
+                Math.clamp(getConfig().getDouble("auction.tax", 0.05), 0, 1),
+                Math.max(1, getConfig().getDouble("auction.min-price", 1)),
+                Math.max(1, getConfig().getDouble("auction.max-price", 1_000_000)),
+                Math.max(0, getConfig().getInt("auction.default-listings", 5)));
     }
 
     /** Fuseau du changement de jour des quêtes (jobs.time-zone), Europe/Paris si invalide. */

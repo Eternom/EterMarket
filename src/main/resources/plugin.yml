@@ -5,7 +5,7 @@ main: fr.eternom.eterMarket.Main
 api-version: '26.2'
 load: POSTWORLD
 authors: [ NadTum ]
-description: Marché du réseau (PNJ boutiques, stock commun ; bientôt métiers et hôtel des ventes).
+description: Marché du réseau (PNJ boutiques, guilde des métiers, stock commun, hôtel des ventes).
 depend: [EterLib]
 softdepend: [Vault, EterEconomy]
 
@@ -15,6 +15,8 @@ commands:
     usage: /market <create|place|remove|edit|delete|list|reload>
     permission: etermarket.admin
 
+# Hôtel des ventes : etermarket.auction.listings.<n> (ex : etermarket.auction.listings.10) permet n annonces
+# en même temps ; sans elle, auction.default-listings.
 permissions:
   etermarket.edit:
     description: Ouvrir l'éditeur d'une boutique (Maj + clic droit sur le PNJ).

@@ -16,7 +16,7 @@ import java.util.stream.Stream;
 
 /**
  * /market (staff, etermarket.admin) :
- * create <pnj> [job <métier>] · place <pnj> · remove (le plus proche) · edit <pnj> · delete <pnj> confirm · list · reload.
+ * create <pnj> [job <métier> | auction] · place <pnj> · remove (le plus proche) · edit <pnj> · delete <pnj> confirm · list · reload.
  */
 public class MarketCommand implements TabExecutor {
 
@@ -81,10 +81,14 @@ public class MarketCommand implements TabExecutor {
         return true;
     }
 
-    /** create <pnj> : boutique ; create <pnj> job <métier> : PNJ de référence de ce métier. */
+    /** create <pnj> : boutique ; create <pnj> job <métier> : PNJ d'un métier ; create <pnj> auction : hôtel des ventes. */
     private void create(Player player, String id, String[] args) {
         if (args.length < 3) {
             npcs.create(player, id, Role.SHOP, null);
+            return;
+        }
+        if (args[2].equalsIgnoreCase("auction")) {
+            npcs.create(player, id, Role.AUCTION, null);
             return;
         }
         String job = args.length > 3 ? args[3].toLowerCase(Locale.ROOT) : "";
@@ -105,7 +109,7 @@ public class MarketCommand implements TabExecutor {
             return filter(npcs.spawner().ids().stream(), args[1]);
         }
         if (args.length == 3 && action.equals("create")) {
-            return filter(Stream.of("job"), args[2]);
+            return filter(Stream.of("job", "auction"), args[2]);
         }
         if (args.length == 4 && action.equals("create") && args[2].equalsIgnoreCase("job")) {
             return filter(jobs.icons().keySet().stream(), args[3]);

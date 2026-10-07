@@ -6,6 +6,7 @@
 #  sont en base (communs à tout le réseau) et se gèrent en jeu :
 #    /market create <pnj>               crée une boutique (une seule fois pour tout le réseau)
 #    /market create <pnj> job <métier>  crée le PNJ de référence d'un métier (quêtes + boutique du métier)
+#    /market create <pnj> auction       crée un PNJ hôtel des ventes
 #    /market place <pnj>                le place là où tu es (autant de fois que tu veux)
 #    /market remove                     retire le PNJ le plus proche
 #    /market edit <pnj>                 ouvre l'éditeur (aussi : Maj + clic droit sur le PNJ)
@@ -35,10 +36,27 @@ jobs:
     chasseur: IRON_SWORD
     pecheur: FISHING_ROD
 
+# Hôtel des ventes (PNJ créé avec /market create <pnj> auction) : entre joueurs, commun à tout le réseau,
+# sans lien avec le stock commun. Les invendus et les achats sans place vont dans la boîte de récupération.
+auction:
+  # Durée d'une annonce, en heures.
+  duration-hours: 48
+  # Frais de mise en vente, payés d'avance et non remboursés (0.01 = 1 %, 1 Helok au minimum).
+  listing-fee: 0.01
+  # Taxe retenue sur le prix de vente (0.05 = 5 %) : le vendeur reçoit le reste.
+  tax: 0.05
+  # Prix minimum et maximum d'une annonce (bloque les transferts déguisés à 1 Helok).
+  min-price: 1
+  max-price: 1000000
+  # Annonces en même temps par joueur ; plus avec la permission etermarket.auction.listings.<n>.
+  default-listings: 5
+
 # Menus : bouton en bas du menu. Avec une commande (sans le /), il la lance pour le joueur et relie
 # les menus entre eux (ex : "profile" pour revenir au menu du profil) ; vide, il ferme le menu.
 menus:
   shop:
     back-command: ""
   jobs:
+    back-command: ""
+  auction:
     back-command: ""

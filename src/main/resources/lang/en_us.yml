@@ -21,7 +21,8 @@ npc:
   role:
     shop: "<info>Shop"
     job: "<info>Guild: <job>"
-  create-usage: '<error>Usage: <accent>/market create \<npc></accent> (shop) or <accent>/market create \<npc> job \<job></accent> (<jobs>)'
+    auction: "<info>Auction house"
+  create-usage: '<error>Usage: <accent>/market create \<npc></accent> (shop), <accent>/market create \<npc> job \<job></accent> (<jobs>) or <accent>/market create \<npc> auction</accent> (auction house)'
   usage: '<error>Usage: <accent>/market \<create|place|remove|edit|delete|list|reload> [npc]'
   invalid-id: "<error>Invalid id: lowercase letters, digits, _ and - (32 characters max)."
   exists: "<error>NPC <accent><npc></accent> already exists."
@@ -192,3 +193,74 @@ catalog:
   remove:
     title: "<primary>Remove the quest"
     body: "Remove this quest from the catalog? Quests already drawn today stay."
+
+auction:
+  hold-item: "<error>Hold the item to sell."
+  price-invalid: "<error>Invalid price."
+  price-range: "<error>The price must be between <accent><min></accent> and <accent><max></accent>."
+  listed: "<info>Listed for <accent><price></accent> <dark_gray>(fee: <fee>)"
+  limit: "<error>You already have <accent><limit></accent> listings: remove one or wait for them to sell."
+  fee-not-enough: "<error>You need <accent><fee></accent> for the listing fee: your item is given back."
+  own-listing: "<error>This is your listing: remove it from « My sales »."
+  bought: "<info>Bought for <accent><price></accent> from <accent><seller></accent>."
+  not-enough: "<error>You need <accent><price></accent> for this purchase."
+  gone: "<error>This listing is no longer available."
+  cancelled: "<info>Listing removed: the item is given back."
+  no-space: "<error>Not enough room in your inventory."
+  to-collection: "<info>No room: the item is waiting in your <accent>collection box</accent>."
+  sold: "<info>Sold: <accent><item></accent>! <accent>+<amount></accent> <dark_gray>(tax deducted)"
+  back: "<accent>« Auction house"
+  sell:
+    title: "<primary>Sell"
+    body: "Sale price. Listing fee: <fee>% (not refunded). Tax on the sale: <tax>%. Duration: <duration>."
+    label: "Price"
+    confirm: "List"
+  buy:
+    title: "<primary>Buy"
+    body: "Buy for <price> from <seller>?"
+    confirm: "Buy"
+  cancel:
+    title: "<primary>Remove the listing"
+    body: "Remove this listing? The item comes back to you, the fee is not refunded."
+    confirm: "<error>Remove"
+  search:
+    title: "<primary>Search"
+    body: "Part of the item name (e.g. diamond, sword, enchanted)."
+    label: "Search"
+    confirm: "Search"
+  menu:
+    title: "<primary>Auction house"
+    title-search: "<primary>Auction house <dark_gray>· <query>"
+    player: "<accent><player>"
+    balance: "<dark_gray>▸ <info>Balance: <accent><amount>"
+    listings: "<dark_gray>▸ <info>My listings: <accent><count></accent><dark_gray>/</dark_gray><accent><limit>"
+    parcels: "<dark_gray>▸ <info>To collect: <accent><count>"
+    empty: "<info>No listing right now"
+    empty-search: "<info>No listing for this search"
+    search: "<accent>Search"
+    search-lore: "<info>Filter by item name"
+    search-clear: "<accent>Right click <dark_gray>· <info>clear the search"
+    mine: "<accent>My sales"
+    mine-lore: "<info>See and remove my listings"
+    sell: "<success>Sell the held item"
+    sell-lore: "<info>Choose your price"
+    collection: "<accent>Collection box"
+  item:
+    price: "<dark_gray>▸ <info>Price: <accent><price>"
+    seller: "<dark_gray>▸ <info>Seller: <accent><seller>"
+    time: "<dark_gray>▸ <info>Time left: <accent><time>"
+    expired: "<dark_gray>▸ <error>Expired (soon in your box)"
+    buy: "<accent>Click <dark_gray>· <info>buy"
+    yours: "<dark_gray>Your listing"
+  mine:
+    title: "<primary>My sales"
+    empty: "<info>No active listing"
+    cancel: "<accent>Click <dark_gray>· <info>remove the listing"
+  collection:
+    title: "<primary>Collection box"
+    empty: "<info>Nothing to collect"
+    take: "<accent>Click <dark_gray>· <info>collect"
+    reason:
+      expired: "<dark_gray>▸ <info>Unsold"
+      cancelled: "<dark_gray>▸ <info>Listing removed"
+      bought: "<dark_gray>▸ <info>Bought (no room)"
