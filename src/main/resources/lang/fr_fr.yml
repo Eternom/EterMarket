@@ -115,8 +115,9 @@ job:
   changed: "<info>Te voilà <accent><job></accent> ! Changement payé <accent><price></accent>."
   change-too-soon: "<error>Tu as changé de métier trop récemment."
   change-not-enough: "<error>Il te faut <accent><price></accent> pour changer de métier."
-  # Liste Tab du réseau, à côté du pseudo (langue par défaut du serveur ; vide = rien) : <job>, <count> = quêtes dispo.
-  tab: " <dark_gray>· <accent><job></accent> <dark_gray>(<info><count></info>)"
+  # Ligne de la sidebar d'EterTab, sous l'argent (<tag_job>), dans la langue du joueur : <job>, <count> = quêtes dispo.
+  sidebar: "  <info>Métier <accent><job> <#8A8A8A>(<white><count></white> à faire)"
+  sidebar-none: "  <info>Métier <#8A8A8A>aucun"
   join:
     menu-title: "<primary>Guilde : <job>"
     name: "<accent>Devenir <job>"

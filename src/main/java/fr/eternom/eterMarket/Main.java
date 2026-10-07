@@ -33,8 +33,8 @@ import java.time.ZoneId;
  */
 public final class Main extends JavaPlugin {
 
-    /** Version minimale d'EterLib : textes communs et outils partagés (Frame, Money, NetworkBus) depuis 1.6.0. */
-    private static final String REQUIRED_ETERLIB = "1.6.0";
+    /** Version minimale d'EterLib : étiquettes du joueur (getPlayerTags) depuis 1.7.0. */
+    private static final String REQUIRED_ETERLIB = "1.7.0";
 
     /** Préfixe des tables d'EterMarket dans la base commune : etermarket_npcs, etermarket_stock... */
     private static final String TABLE_PREFIX = "etermarket_";

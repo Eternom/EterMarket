@@ -115,8 +115,9 @@ job:
   changed: "<info>You are now a <accent><job></accent>! Change paid <accent><price></accent>."
   change-too-soon: "<error>You changed jobs too recently."
   change-not-enough: "<error>You need <accent><price></accent> to change jobs."
-  # Network Tab list, next to the name (server default language; empty = nothing): <job>, <count> = quests available.
-  tab: " <dark_gray>· <accent><job></accent> <dark_gray>(<info><count></info>)"
+  # EterTab sidebar line, below the money (<tag_job>), in the player's language: <job>, <count> = quests available.
+  sidebar: "  <info>Job <accent><job> <#8A8A8A>(<white><count></white> to do)"
+  sidebar-none: "  <info>Job <#8A8A8A>none"
   join:
     menu-title: "<primary>Guild: <job>"
     name: "<accent>Become a <job>"

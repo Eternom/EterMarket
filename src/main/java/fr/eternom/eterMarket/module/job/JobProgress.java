@@ -35,8 +35,8 @@ public class JobProgress {
 
     private static final String SIDEBAR_OWNER = "EterMarket";
     private static final long FLUSH_TICKS = 30 * 20;
-    private static final long TAB_TICKS = 60 * 20;
-    private static final String TAB_TAG = "job";
+    private static final long JOB_TICKS = 60 * 20;
+    private static final String JOB_TAG = "job";
 
     /** Un progrès pas encore écrit en base. */
     private record Key(UUID player, int slot, long day, String objectives, int target) {
@@ -64,8 +64,8 @@ public class JobProgress {
 
     public void start() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::flushAll, FLUSH_TICKS, FLUSH_TICKS);
-        // Changement de jour : le nombre de quêtes dispo du Tab repasse au plein
-        Bukkit.getScheduler().runTaskTimer(plugin, () -> Bukkit.getOnlinePlayers().forEach(this::publishTab), TAB_TICKS, TAB_TICKS);
+        // Changement de jour : le nombre de quêtes dispo de la sidebar repasse au plein
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> Bukkit.getOnlinePlayers().forEach(this::publishJob), JOB_TICKS, JOB_TICKS);
         Bukkit.getOnlinePlayers().forEach(this::join); // /reload
     }
 
@@ -79,7 +79,7 @@ public class JobProgress {
     public void join(Player player) {
         UUID uuid = player.getUniqueId();
         Tasks.async(plugin, player, () -> service.activeQuests(uuid),
-                board -> board.ifPresent(quests -> update(player, quests.job(), quests.quests())),
+                board -> board.ifPresentOrElse(quests -> update(player, quests.job(), quests.quests()), () -> publishJob(player)),
                 () -> { });
     }
 
@@ -109,7 +109,7 @@ public class JobProgress {
         }
         active.put(uuid, new Active(job, merged));
         refreshSidebar(player);
-        publishTab(player);
+        publishJob(player);
     }
 
     /** Thread principal : la quête telle que ce serveur la connaît (progression à jour), sinon celle donnée. */
@@ -125,7 +125,7 @@ public class JobProgress {
     void markDone(Player player, Quest quest) {
         replace(player.getUniqueId(), quest.slot(), Quest::withDone);
         refreshSidebar(player);
-        publishTab(player);
+        publishJob(player);
     }
 
     // ---------- Actions ----------
@@ -181,16 +181,17 @@ public class JobProgress {
         return new Key(player, quest.slot(), quest.day(), Objective.format(quest.objectives()), quest.target());
     }
 
-    // ---------- Liste Tab ----------
+    // ---------- Sidebar : métier ----------
 
     /**
-     * Métier et quêtes encore dispo aujourd'hui à côté du pseudo dans le Tab du réseau (EterLib -> EterTab-Velocity,
-     * <tag_job>), dans la langue par défaut du serveur (la liste est vue par tout le monde). Nouveau jour : toutes les
-     * quêtes du jour sont dispo ; quêtes du jour faites : la bonus compte tant qu'elle n'est pas faite.
+     * Ligne du métier dans la sidebar d'EterTab, sous l'argent (étiquette <tag_job> d'EterLib), dans la langue du joueur :
+     * son métier et ses quêtes encore dispo aujourd'hui, ou « aucun ». Nouveau jour : toutes les quêtes du jour sont
+     * dispo ; quêtes du jour faites : la bonus compte tant qu'elle n'est pas faite.
      */
-    private void publishTab(Player player) {
+    private void publishJob(Player player) {
         Active state = active.get(player.getUniqueId());
         if (state == null) {
+            EterLib.get().getPlayerTags().set(player, JOB_TAG, messages.raw(player, "job.sidebar-none"));
             return;
         }
         long today = service.today();
@@ -206,11 +207,11 @@ public class JobProgress {
                 available++;
             }
         }
-        String format = messages.raw(Bukkit.getConsoleSender(), "job.tab");
+        String format = messages.raw(player, "job.sidebar");
         String value = format == null ? "" : format
-                .replace("<job>", MiniMessage.miniMessage().escapeTags(service.jobName(Bukkit.getConsoleSender(), state.job())))
+                .replace("<job>", MiniMessage.miniMessage().escapeTags(service.jobName(player, state.job())))
                 .replace("<count>", String.valueOf(available));
-        EterLib.get().getTabTags().set(player, TAB_TAG, value);
+        EterLib.get().getPlayerTags().set(player, JOB_TAG, value);
     }
 
     // ---------- Sidebar ----------
