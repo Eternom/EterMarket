@@ -1,0 +1,17 @@
+# ============================================================
+#  EterMarket
+# ============================================================
+#
+#  Les PNJ, le contenu des boutiques et le stock commun sont en base (communs
+#  à tout le réseau) et se gèrent en jeu :
+#    /market create <pnj>   crée un PNJ (une seule fois pour tout le réseau)
+#    /market place <pnj>    le place là où tu es (autant de fois que tu veux)
+#    /market remove         retire le PNJ le plus proche
+#    /market edit <pnj>     ouvre l'éditeur (aussi : Maj + clic droit sur le PNJ)
+#  Les textes sont dans lang/. Toute modification nécessite un redémarrage du serveur.
+
+# Menus : bouton en bas du menu. Avec une commande (sans le /), il la lance pour le joueur et relie
+# les menus entre eux (ex : "profile" pour revenir au menu du profil) ; vide, il ferme le menu.
+menus:
+  shop:
+    back-command: ""

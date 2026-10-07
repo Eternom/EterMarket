@@ -1,0 +1,106 @@
+# EterMarket messages, MiniMessage format: https://docs.advntr.dev/minimessage/format
+# Palette tags (EterLib/config.yml > language.colors): <primary> <accent> <info> <error> <success>
+#   <info> = normal light gray text, <accent> = important words in orange.
+# Values between <> such as <npc> are filled in by the plugin. To show a literal "<", write \< inside 'single quotes'.
+# A missing key falls back to the plugin's built-in text: you only need to keep the lines you change.
+# The message prefix ("Core") is shared by all plugins: EterLib/config.yml > language.prefix.
+
+command:
+  players-only: "<error>This command can only be used by players."
+
+error:
+  generic: "<error>Something went wrong, please try again later."
+
+economy:
+  unavailable: "<error>The economy is not available right now."
+
+dialog:
+  cancel: "Cancel"
+
+npc:
+  role:
+    shop: "<info>Shop"
+  usage: '<error>Usage: <accent>/market \<create|place|remove|edit|delete|list|reload> [npc]'
+  invalid-id: "<error>Invalid id: lowercase letters, digits, _ and - (32 characters max)."
+  exists: "<error>NPC <accent><npc></accent> already exists."
+  unknown: "<error>Unknown NPC: <accent><npc></accent>."
+  created: "<info>NPC <accent><npc></accent> created. Place it with <accent>/market place <npc></accent>, fill it with <accent>/market edit <npc></accent>."
+  placed: "<info>NPC <accent><npc></accent> placed here."
+  removed: "<info>Placement of NPC <accent><npc></accent> removed (its other placements stay)."
+  none-near: "<error>No NPC within <accent><radius></accent> blocks."
+  deleted: "<info>NPC <accent><npc></accent> deleted, with all its placements and its shop."
+  delete-usage: '<error>Deletes the NPC everywhere, with its shop: <accent>/market delete \<npc> confirm'
+  list: "<info>NPCs: <accent><npcs>"
+  list-empty: "<info>No NPC. Create one with <accent>/market create \\<npc></accent>."
+  reloaded: "<info>NPCs reloaded."
+
+shop:
+  menu:
+    player: "<accent><player>"
+    balance: "<dark_gray>▸ <info>Balance: <accent><amount>"
+    empty: "<info>Nothing for sale right now"
+    previous: "<accent>« Previous page"
+    next: "<accent>Next page »"
+    page: "<info>Page <accent><page></accent>/<accent><pages>"
+  item:
+    price: "<dark_gray>▸ <info>Price: <accent><price></accent> <dark_gray>(lot of <amount>)"
+    stock: "<dark_gray>▸ <info>In stock: <accent><amount>"
+    sold-out: "<error>● Out of stock"
+    buy: "<accent>Left click <dark_gray>· <info>buy one lot"
+    buy-many: "<accent>Right click <dark_gray>· <info>choose the quantity"
+  quantity:
+    title: "<primary>How many lots?"
+    body: "Price of one lot: <price>"
+    label: "Lots"
+    confirm: "Buy"
+  bought: "<info>Bought <accent><amount></accent> item(s) for <accent><price></accent>."
+  no-space: "<error>Not enough room in your inventory."
+  no-stock: "<error>Not enough stock left for this purchase."
+  not-enough: "<error>You need <accent><price></accent> for this purchase."
+
+editor:
+  title: "<dark_red>Editor · <npc>"
+  save: "Save"
+  hold-item: "<error>Hold the item to sell (with the quantity of one lot)."
+  added: "<info>Item added to the shop for <accent><price></accent>."
+  add: "<success>Add the held item"
+  add-lore: "<info>The held quantity = the size of one lot"
+  info:
+    name: "<accent><npc>"
+    items: "<dark_gray>▸ <info>Items: <accent><count>"
+    stock-on: "<dark_gray>▸ <info>Sells <accent>from stock"
+    stock-off: "<dark_gray>▸ <info>Sells <accent>unlimited"
+  stock:
+    button-on: "<accent>Sell from stock: <success>yes"
+    button-off: "<accent>Sell from stock: <error>no"
+    lore: "<info>Yes: the shop only sells the shared stock (filled by quests)"
+    enabled: "<info>The shop now sells <accent>from stock</accent>."
+    disabled: "<info>The shop now sells <accent>unlimited</accent> quantities."
+  item:
+    stock: "<dark_gray>▸ <info>Shared stock: <accent><amount>"
+    not-stockable: "<dark_gray>▸ <info>Custom item: never in stock, always unlimited"
+    price: "<accent>Left click <dark_gray>· <info>change the price"
+    remove: "<accent>Right click <dark_gray>· <info>remove"
+  price:
+    title: "<primary>Lot price"
+    body: "Price of a lot of <amount>, in Heloks."
+    label: "Price"
+    invalid: "<error>Invalid price."
+  remove:
+    title: "<primary>Remove the item"
+    body: "Remove this item from the shop?"
+    confirm: "<error>Remove"
+  rename:
+    button: "<accent>NPC name"
+    lore: "<info>MiniMessage format"
+    title: "<primary>NPC name"
+    body: "Name shown above its head (MiniMessage, e.g. <accent>Blacksmith)."
+    label: "Name"
+  skin:
+    button: "<accent>NPC skin"
+    lore: "<info>A player name, or an exact texture"
+    title: "<primary>NPC skin"
+    body: "A player name, OR the value and signature of a texture (e.g. MineSkin), which take priority."
+    player: "Player name"
+    value: "Texture: value"
+    signature: "Texture: signature"

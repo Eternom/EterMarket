@@ -1,0 +1,26 @@
+name: EterMarket
+version: '${version}'
+
+main: fr.eternom.eterMarket.Main
+api-version: '26.2'
+load: POSTWORLD
+authors: [ NadTum ]
+description: Marché du réseau (PNJ boutiques, stock commun ; bientôt métiers et hôtel des ventes).
+depend: [EterLib]
+softdepend: [Vault, EterEconomy]
+
+commands:
+  market:
+    description: Gestion des PNJ du marché (staff).
+    usage: /market <create|place|remove|edit|delete|list|reload>
+    permission: etermarket.admin
+
+permissions:
+  etermarket.edit:
+    description: Ouvrir l'éditeur d'une boutique (Maj + clic droit sur le PNJ).
+    default: op
+  etermarket.admin:
+    description: Toutes les permissions d'EterMarket (dont /market).
+    default: op
+    children:
+      etermarket.edit: true

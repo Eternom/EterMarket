@@ -1,0 +1,106 @@
+# Messages d'EterMarket, format MiniMessage : https://docs.advntr.dev/minimessage/format
+# Balises de la palette (EterLib/config.yml > language.colors) : <primary> <accent> <info> <error> <success>
+#   <info> = texte courant gris clair, <accent> = mots importants en orange.
+# Les valeurs entre <> comme <npc> sont remplies par le plugin. Pour afficher un "<", écrire \< entre 'guillemets simples'.
+# Une clé absente reprend le texte intégré au plugin : tu peux ne garder que les lignes que tu modifies.
+# Le préfixe des messages (« Core ») est commun à tous les plugins : EterLib/config.yml > language.prefix.
+
+command:
+  players-only: "<error>Commande réservée aux joueurs."
+
+error:
+  generic: "<error>Une erreur est survenue, réessaie plus tard."
+
+economy:
+  unavailable: "<error>L'économie n'est pas disponible pour le moment."
+
+dialog:
+  cancel: "Annuler"
+
+npc:
+  role:
+    shop: "<info>Boutique"
+  usage: '<error>Utilisation : <accent>/market \<create|place|remove|edit|delete|list|reload> [pnj]'
+  invalid-id: "<error>Identifiant invalide : minuscules, chiffres, _ et - (32 caractères max)."
+  exists: "<error>Le PNJ <accent><npc></accent> existe déjà."
+  unknown: "<error>PNJ inconnu : <accent><npc></accent>."
+  created: "<info>PNJ <accent><npc></accent> créé. Place-le avec <accent>/market place <npc></accent>, remplis-le avec <accent>/market edit <npc></accent>."
+  placed: "<info>PNJ <accent><npc></accent> placé ici."
+  removed: "<info>Emplacement du PNJ <accent><npc></accent> retiré (ses autres emplacements restent)."
+  none-near: "<error>Aucun PNJ à moins de <accent><radius></accent> blocs."
+  deleted: "<info>PNJ <accent><npc></accent> supprimé, avec tous ses emplacements et sa boutique."
+  delete-usage: '<error>Supprime le PNJ partout, avec sa boutique : <accent>/market delete \<pnj> confirm'
+  list: "<info>PNJ : <accent><npcs>"
+  list-empty: "<info>Aucun PNJ. Crée-en un avec <accent>/market create \\<pnj></accent>."
+  reloaded: "<info>PNJ rechargés."
+
+shop:
+  menu:
+    player: "<accent><player>"
+    balance: "<dark_gray>▸ <info>Solde : <accent><amount>"
+    empty: "<info>Rien à vendre pour le moment"
+    previous: "<accent>« Page précédente"
+    next: "<accent>Page suivante »"
+    page: "<info>Page <accent><page></accent>/<accent><pages>"
+  item:
+    price: "<dark_gray>▸ <info>Prix : <accent><price></accent> <dark_gray>(lot de <amount>)"
+    stock: "<dark_gray>▸ <info>En stock : <accent><amount>"
+    sold-out: "<error>● Rupture de stock"
+    buy: "<accent>Clic gauche <dark_gray>· <info>acheter un lot"
+    buy-many: "<accent>Clic droit <dark_gray>· <info>choisir la quantité"
+  quantity:
+    title: "<primary>Combien de lots ?"
+    body: "Prix d'un lot : <price>"
+    label: "Lots"
+    confirm: "Acheter"
+  bought: "<info>Achat de <accent><amount></accent> objet(s) pour <accent><price></accent>."
+  no-space: "<error>Pas assez de place dans ton inventaire."
+  no-stock: "<error>Plus assez de stock pour cet achat."
+  not-enough: "<error>Il te faut <accent><price></accent> pour cet achat."
+
+editor:
+  title: "<dark_red>Éditeur · <npc>"
+  save: "Enregistrer"
+  hold-item: "<error>Tiens en main l'objet à vendre (avec la quantité d'un lot)."
+  added: "<info>Objet ajouté à la boutique pour <accent><price></accent>."
+  add: "<success>Ajouter l'objet en main"
+  add-lore: "<info>La quantité tenue = la taille d'un lot"
+  info:
+    name: "<accent><npc>"
+    items: "<dark_gray>▸ <info>Objets : <accent><count>"
+    stock-on: "<dark_gray>▸ <info>Vente <accent>sur stock"
+    stock-off: "<dark_gray>▸ <info>Vente <accent>illimitée"
+  stock:
+    button-on: "<accent>Vente sur stock : <success>oui"
+    button-off: "<accent>Vente sur stock : <error>non"
+    lore: "<info>Oui : la boutique ne vend que le stock commun (rempli par les quêtes)"
+    enabled: "<info>La boutique vend maintenant <accent>sur stock</accent>."
+    disabled: "<info>La boutique vend maintenant en <accent>quantité illimitée</accent>."
+  item:
+    stock: "<dark_gray>▸ <info>Stock commun : <accent><amount>"
+    not-stockable: "<dark_gray>▸ <info>Objet personnalisé : jamais en stock, toujours illimité"
+    price: "<accent>Clic gauche <dark_gray>· <info>changer le prix"
+    remove: "<accent>Clic droit <dark_gray>· <info>retirer"
+  price:
+    title: "<primary>Prix du lot"
+    body: "Prix d'un lot de <amount>, en Heloks."
+    label: "Prix"
+    invalid: "<error>Prix invalide."
+  remove:
+    title: "<primary>Retirer l'objet"
+    body: "Retirer cet objet de la boutique ?"
+    confirm: "<error>Retirer"
+  rename:
+    button: "<accent>Nom du PNJ"
+    lore: "<info>Format MiniMessage"
+    title: "<primary>Nom du PNJ"
+    body: "Nom affiché au-dessus de sa tête (MiniMessage, ex : <accent>Forgeron)."
+    label: "Nom"
+  skin:
+    button: "<accent>Skin du PNJ"
+    lore: "<info>Pseudo d'un joueur, ou texture précise"
+    title: "<primary>Skin du PNJ"
+    body: "Le pseudo d'un joueur, OU la valeur et la signature d'une texture (ex : MineSkin), prioritaires."
+    player: "Pseudo"
+    value: "Texture : valeur"
+    signature: "Texture : signature"
