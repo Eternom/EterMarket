@@ -4,6 +4,7 @@ import com.destroystokyo.paper.profile.ProfileProperty;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Npc;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Placement;
+import fr.eternom.eterMarket.module.npc.NpcRepository.Role;
 import io.papermc.paper.datacomponent.item.ResolvableProfile;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
@@ -11,6 +12,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Mannequin;
 import org.bukkit.persistence.PersistentDataType;
@@ -155,7 +157,10 @@ public class NpcSpawner {
     private void configure(Mannequin mannequin, Npc npc) {
         mannequin.customName(messages.render(npc.name(), TagResolver.empty()));
         mannequin.setCustomNameVisible(true);
-        mannequin.setDescription(messages.get(Bukkit.getConsoleSender(), "npc.role." + npc.role().name().toLowerCase(Locale.ROOT)));
+        CommandSender console = Bukkit.getConsoleSender();
+        mannequin.setDescription(npc.role() == Role.JOB
+                ? messages.get(console, "npc.role.job", "job", messages.plain(console, "job.name." + npc.job()))
+                : messages.get(console, "npc.role." + npc.role().name().toLowerCase(Locale.ROOT)));
         ResolvableProfile.Builder profile = ResolvableProfile.resolvableProfile();
         if (npc.texture() != null) {
             profile.addProperty(new ProfileProperty("textures", npc.texture().value(), npc.texture().signature()));

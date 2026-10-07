@@ -20,6 +20,8 @@ dialog:
 npc:
   role:
     shop: "<info>Boutique"
+    job: "<info>Guilde : <job>"
+  create-usage: '<error>Utilisation : <accent>/market create \<pnj></accent> (boutique) ou <accent>/market create \<pnj> job \<métier></accent> (<jobs>)'
   usage: '<error>Utilisation : <accent>/market \<create|place|remove|edit|delete|list|reload> [pnj]'
   invalid-id: "<error>Identifiant invalide : minuscules, chiffres, _ et - (32 caractères max)."
   exists: "<error>Le PNJ <accent><npc></accent> existe déjà."
@@ -42,6 +44,8 @@ shop:
     previous: "<accent>« Page précédente"
     next: "<accent>Page suivante »"
     page: "<info>Page <accent><page></accent>/<accent><pages>"
+    quests: "<accent>Quêtes du métier"
+    quests-lore: "<info>Tes quêtes du jour"
   item:
     price: "<dark_gray>▸ <info>Prix : <accent><price></accent> <dark_gray>(lot de <amount>)"
     stock: "<dark_gray>▸ <info>En stock : <accent><amount>"
@@ -76,7 +80,11 @@ editor:
     lore: "<info>Oui : la boutique ne vend que le stock commun (rempli par les quêtes)"
     enabled: "<info>La boutique vend maintenant <accent>sur stock</accent>."
     disabled: "<info>La boutique vend maintenant en <accent>quantité illimitée</accent>."
+  catalog:
+    button: "<accent>Répertoire des quêtes"
+    lore: "<info>Les quêtes possibles de ce métier"
   item:
+    arbitrage: "<error>⚠ Vendu <price>/unité, pas plus cher qu'une quête (<reward>/unité) : on achète pour livrer !"
     stock: "<dark_gray>▸ <info>Stock commun : <accent><amount>"
     not-stockable: "<dark_gray>▸ <info>Objet personnalisé : jamais en stock, toujours illimité"
     price: "<accent>Clic gauche <dark_gray>· <info>changer le prix"
@@ -104,3 +112,83 @@ editor:
     player: "Pseudo"
     value: "Texture : valeur"
     signature: "Texture : signature"
+
+job:
+  name:
+    mineur: "Mineur"
+    bucheron: "Bûcheron"
+    fermier: "Fermier"
+    chasseur: "Chasseur"
+    pecheur: "Pêcheur"
+  unknown: "<error>Métier inconnu : <accent><job></accent> (voir config.yml > jobs.list)."
+  joined: "<info>Bienvenue dans la guilde des <accent><job></accent> ! Tes quêtes t'attendent."
+  changed: "<info>Te voilà <accent><job></accent> ! Changement payé <accent><price></accent>."
+  change-too-soon: "<error>Tu as changé de métier trop récemment."
+  change-not-enough: "<error>Il te faut <accent><price></accent> pour changer de métier."
+  join:
+    menu-title: "<primary>Guilde : <job>"
+    name: "<accent>Devenir <job>"
+    description:
+      mineur: "<info>Charbon, fer, or, diamants : la guilde paie les minerais."
+      bucheron: "<info>Bûches de toutes les essences, pommes : la guilde paie le bois."
+      fermier: "<info>Blé, légumes, cannes, verrues : la guilde paie les récoltes."
+      chasseur: "<info>Os, ficelle, poudre, perles : la guilde paie le butin des monstres."
+      pecheur: "<info>Poissons et trésors : la guilde paie la pêche."
+    free: "<success>● <info>Premier métier : gratuit"
+    current: "<dark_gray>▸ <info>Tu quittes : <accent><job>"
+    cost: "<dark_gray>▸ <info>Changement : <accent><price>"
+    cooldown: "<error>● <info>Changement possible dans <accent><time>"
+    click: "<accent>Clic <dark_gray>· <info>rejoindre la guilde"
+    title: "<primary>Devenir <job>"
+    body-first: "Rejoindre la guilde : tu recevras chaque jour des quêtes de livraison."
+    body-change: "Quitter <current> pour devenir <job> ? Cela coûte <price>, et tes quêtes du jour sont perdues."
+    confirm: "Rejoindre"
+
+quest:
+  menu:
+    title: "<primary>Quêtes : <job>"
+    player: "<accent><player>"
+    job: "<dark_gray>▸ <info>Métier : <accent><job>"
+    progress: "<dark_gray>▸ <info>Quêtes du jour : <accent><done></accent><dark_gray>/</dark_gray><accent><total>"
+    reset: "<dark_gray>▸ <info>Nouvelles quêtes dans <accent><time>"
+    shop: "<accent>Boutique du métier"
+    shop-lore: "<info>De quoi t'aider dans tes quêtes"
+  item:
+    name: "<accent>Livrer <amount> × <item>"
+    name-bonus: "<primary><bold>Bonus</bold></primary> <accent>· Livrer <amount> × <item>"
+    reward: "<dark_gray>▸ <info>Récompense : <accent><reward>"
+    owned: "<dark_gray>▸ <info>Tu en as : <error><owned></error><dark_gray>/</dark_gray><accent><amount>"
+    owned-enough: "<dark_gray>▸ <info>Tu en as : <success><owned></success><dark_gray>/</dark_gray><accent><amount>"
+    done: "<success>✔ Quête terminée"
+    deliver: "<accent>Clic <dark_gray>· <info>livrer et être payé"
+    gather: "<dark_gray>Récolte-les puis reviens ici"
+  bonus:
+    locked: "<dark_gray>Quête bonus"
+    locked-lore: "<info>Termine les quêtes du jour pour la débloquer"
+  missing: "<error>Il te faut <accent><amount></accent> objets (simples, sans nom ni enchantement) sur toi."
+  already-done: "<error>Cette quête est déjà terminée : tes objets te sont rendus."
+  done: "<info>Quête livrée ! <accent>+<reward>"
+  bonus-done: "<info>Quête bonus livrée ! <accent>+<reward>"
+
+catalog:
+  title: "<dark_red>Quêtes : <job>"
+  info: "<accent><job>"
+  info-count: "<dark_gray>▸ <info>Quêtes possibles : <accent><count>"
+  add: "<success>Ajouter l'objet en main"
+  add-lore: "<info>La quantité tenue = la quantité à livrer"
+  back: "<accent>« Éditeur de la boutique"
+  invalid: "<error>Quantité ou récompense invalide."
+  item:
+    amount: "<dark_gray>▸ <info>À livrer : <accent><amount>"
+    reward: "<dark_gray>▸ <info>Récompense : <accent><reward></accent> <dark_gray>(<unit>/unité)"
+    arbitrage: "<error>⚠ Une boutique le vend <price>/unité, pas plus cher : on achète pour livrer !"
+    edit: "<accent>Clic gauche <dark_gray>· <info>quantité et récompense"
+    remove: "<accent>Clic droit <dark_gray>· <info>retirer"
+  edit:
+    title: "<primary>Quête"
+    body: "Quantité à livrer et récompense en Heloks (repère : 150 à 250 par quête)."
+    amount: "Quantité"
+    reward: "Récompense"
+  remove:
+    title: "<primary>Retirer la quête"
+    body: "Retirer cette quête du répertoire ? Les quêtes déjà tirées aujourd'hui restent."

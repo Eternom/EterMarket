@@ -67,12 +67,13 @@ public class NpcService {
         }, "PNJ d'EterMarket illisibles");
     }
 
-    public void create(Player admin, String id) {
+    /** @param job métier dont ce PNJ est la référence (rôle JOB), null pour une boutique */
+    public void create(Player admin, String id, Role role, String job) {
         if (!ID.matcher(id).matches()) {
             messages.send(admin, "npc.invalid-id");
             return;
         }
-        Tasks.async(plugin, admin, () -> repository.create(id, Role.SHOP), created -> {
+        Tasks.async(plugin, admin, () -> repository.create(id, role, job), created -> {
             if (!created) {
                 messages.send(admin, "npc.exists", "npc", id);
                 return;

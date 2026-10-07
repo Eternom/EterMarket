@@ -4,6 +4,7 @@ import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
 import fr.eternom.eterLib.helper.message.Messages;
+import fr.eternom.eterMarket.module.npc.NpcRepository.Role;
 import fr.eternom.eterMarket.module.shop.ShopGui.View;
 import fr.eternom.eterMarket.module.shop.ShopRepository.ShopItem;
 import net.kyori.adventure.text.Component;
@@ -31,7 +32,7 @@ import java.util.Set;
  *  ▢ · · · · · · · ▢     clic gauche : acheter un lot · clic droit : choisir la quantité
  *  ▢ · · · · · · · ▢
  *  ▣ · · · · · · · ▣
- *  ◀ ▣ ▢ ▢ « ▢ ▢ ▣ ▶     « = retour (commande de la config) ou fermer
+ *  ◀ ▣ ✎ ▢ « ▢ ▢ ▣ ▶     ✎ = quêtes du métier (PNJ de métier) · « = retour (commande de la config) ou fermer
  * </pre>
  */
 class ShopMenu implements Menu {
@@ -39,6 +40,7 @@ class ShopMenu implements Menu {
     static final List<Integer> SLOTS = innerSlots();
     private static final int INFO = 4;
     private static final int PREVIOUS = 45;
+    private static final int QUESTS = 47;
     private static final int BACK = 49;
     private static final int NEXT = 53;
     private static final int EMPTY = 22;
@@ -81,6 +83,9 @@ class ShopMenu implements Menu {
         } else if (slot == NEXT && page + 1 < pageCount(view.items().size())) {
             Sounds.page(player);
             gui.open(player, view.npc().id(), page + 1);
+        } else if (slot == QUESTS && view.npc().role() == Role.JOB) {
+            Sounds.page(player);
+            gui.openQuests(player, view.npc());
         } else if (slot == BACK) {
             gui.backButton().click(player);
         }
@@ -107,6 +112,9 @@ class ShopMenu implements Menu {
             inventory.setItem(EMPTY, Items.item(Material.BARRIER, text("shop.menu.empty"), List.of()));
         }
         pages(inventory, page, pageCount(items.size()), messages, viewer);
+        if (view.npc().role() == Role.JOB) {
+            inventory.setItem(QUESTS, Items.item(Material.WRITABLE_BOOK, text("shop.menu.quests"), List.of(text("shop.menu.quests-lore"))));
+        }
         inventory.setItem(BACK, gui.backButton().item(viewer));
     }
 

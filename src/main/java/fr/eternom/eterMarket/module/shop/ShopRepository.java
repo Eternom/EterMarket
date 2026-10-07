@@ -44,6 +44,14 @@ public class ShopRepository {
                 .toList();
     }
 
+    /** Tous les objets de toutes les boutiques (contrôle des prix face aux récompenses des quêtes). */
+    public List<ShopItem> allItems() {
+        return database.get(TABLE, Map.of()).stream()
+                .map(row -> new ShopItem(row.getString("npc"), row.getInt("position"), ItemStack.deserializeBytes(row.getBytes("item")),
+                        row.getDouble("price")))
+                .toList();
+    }
+
     /** Ajoute à la fin de la boutique. */
     public void add(String npc, ItemStack item, double price) {
         int next = items(npc).stream().mapToInt(ShopItem::position).max().orElse(-1) + 1;

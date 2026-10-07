@@ -20,6 +20,8 @@ dialog:
 npc:
   role:
     shop: "<info>Shop"
+    job: "<info>Guild: <job>"
+  create-usage: '<error>Usage: <accent>/market create \<npc></accent> (shop) or <accent>/market create \<npc> job \<job></accent> (<jobs>)'
   usage: '<error>Usage: <accent>/market \<create|place|remove|edit|delete|list|reload> [npc]'
   invalid-id: "<error>Invalid id: lowercase letters, digits, _ and - (32 characters max)."
   exists: "<error>NPC <accent><npc></accent> already exists."
@@ -42,6 +44,8 @@ shop:
     previous: "<accent>« Previous page"
     next: "<accent>Next page »"
     page: "<info>Page <accent><page></accent>/<accent><pages>"
+    quests: "<accent>Job quests"
+    quests-lore: "<info>Your quests of the day"
   item:
     price: "<dark_gray>▸ <info>Price: <accent><price></accent> <dark_gray>(lot of <amount>)"
     stock: "<dark_gray>▸ <info>In stock: <accent><amount>"
@@ -76,7 +80,11 @@ editor:
     lore: "<info>Yes: the shop only sells the shared stock (filled by quests)"
     enabled: "<info>The shop now sells <accent>from stock</accent>."
     disabled: "<info>The shop now sells <accent>unlimited</accent> quantities."
+  catalog:
+    button: "<accent>Quest catalog"
+    lore: "<info>The possible quests of this job"
   item:
+    arbitrage: "<error>⚠ Sold <price>/unit, not more than a quest pays (<reward>/unit): people will buy to deliver!"
     stock: "<dark_gray>▸ <info>Shared stock: <accent><amount>"
     not-stockable: "<dark_gray>▸ <info>Custom item: never in stock, always unlimited"
     price: "<accent>Left click <dark_gray>· <info>change the price"
@@ -104,3 +112,83 @@ editor:
     player: "Player name"
     value: "Texture: value"
     signature: "Texture: signature"
+
+job:
+  name:
+    mineur: "Miner"
+    bucheron: "Lumberjack"
+    fermier: "Farmer"
+    chasseur: "Hunter"
+    pecheur: "Fisher"
+  unknown: "<error>Unknown job: <accent><job></accent> (see config.yml > jobs.list)."
+  joined: "<info>Welcome to the <accent><job></accent> guild! Your quests are waiting."
+  changed: "<info>You are now a <accent><job></accent>! Change paid <accent><price></accent>."
+  change-too-soon: "<error>You changed jobs too recently."
+  change-not-enough: "<error>You need <accent><price></accent> to change jobs."
+  join:
+    menu-title: "<primary>Guild: <job>"
+    name: "<accent>Become a <job>"
+    description:
+      mineur: "<info>Coal, iron, gold, diamonds: the guild pays for ores."
+      bucheron: "<info>Logs of every kind, apples: the guild pays for wood."
+      fermier: "<info>Wheat, vegetables, cane, wart: the guild pays for crops."
+      chasseur: "<info>Bones, string, gunpowder, pearls: the guild pays for mob loot."
+      pecheur: "<info>Fish and treasures: the guild pays for fishing."
+    free: "<success>● <info>First job: free"
+    current: "<dark_gray>▸ <info>You leave: <accent><job>"
+    cost: "<dark_gray>▸ <info>Change: <accent><price>"
+    cooldown: "<error>● <info>Change possible in <accent><time>"
+    click: "<accent>Click <dark_gray>· <info>join the guild"
+    title: "<primary>Become a <job>"
+    body-first: "Join the guild: you will receive delivery quests every day."
+    body-change: "Leave <current> to become a <job>? It costs <price>, and your quests of the day are lost."
+    confirm: "Join"
+
+quest:
+  menu:
+    title: "<primary>Quests: <job>"
+    player: "<accent><player>"
+    job: "<dark_gray>▸ <info>Job: <accent><job>"
+    progress: "<dark_gray>▸ <info>Quests of the day: <accent><done></accent><dark_gray>/</dark_gray><accent><total>"
+    reset: "<dark_gray>▸ <info>New quests in <accent><time>"
+    shop: "<accent>Job shop"
+    shop-lore: "<info>What helps with your quests"
+  item:
+    name: "<accent>Deliver <amount> × <item>"
+    name-bonus: "<primary><bold>Bonus</bold></primary> <accent>· Deliver <amount> × <item>"
+    reward: "<dark_gray>▸ <info>Reward: <accent><reward>"
+    owned: "<dark_gray>▸ <info>You have: <error><owned></error><dark_gray>/</dark_gray><accent><amount>"
+    owned-enough: "<dark_gray>▸ <info>You have: <success><owned></success><dark_gray>/</dark_gray><accent><amount>"
+    done: "<success>✔ Quest completed"
+    deliver: "<accent>Click <dark_gray>· <info>deliver and get paid"
+    gather: "<dark_gray>Gather them, then come back here"
+  bonus:
+    locked: "<dark_gray>Bonus quest"
+    locked-lore: "<info>Complete the quests of the day to unlock it"
+  missing: "<error>You need <accent><amount></accent> items (plain, no name or enchantment) on you."
+  already-done: "<error>This quest is already completed: your items are given back."
+  done: "<info>Quest delivered! <accent>+<reward>"
+  bonus-done: "<info>Bonus quest delivered! <accent>+<reward>"
+
+catalog:
+  title: "<dark_red>Quests: <job>"
+  info: "<accent><job>"
+  info-count: "<dark_gray>▸ <info>Possible quests: <accent><count>"
+  add: "<success>Add the held item"
+  add-lore: "<info>The held quantity = the quantity to deliver"
+  back: "<accent>« Shop editor"
+  invalid: "<error>Invalid quantity or reward."
+  item:
+    amount: "<dark_gray>▸ <info>To deliver: <accent><amount>"
+    reward: "<dark_gray>▸ <info>Reward: <accent><reward></accent> <dark_gray>(<unit>/unit)"
+    arbitrage: "<error>⚠ A shop sells it <price>/unit, not more: people will buy to deliver!"
+    edit: "<accent>Left click <dark_gray>· <info>quantity and reward"
+    remove: "<accent>Right click <dark_gray>· <info>remove"
+  edit:
+    title: "<primary>Quest"
+    body: "Quantity to deliver and reward in Heloks (guideline: 150 to 250 per quest)."
+    amount: "Quantity"
+    reward: "Reward"
+  remove:
+    title: "<primary>Remove the quest"
+    body: "Remove this quest from the catalog? Quests already drawn today stay."

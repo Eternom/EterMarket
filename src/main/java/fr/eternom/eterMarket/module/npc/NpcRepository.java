@@ -21,16 +21,29 @@ public class NpcRepository {
     private static final String NPCS = "npcs";
     private static final String PLACEMENTS = "placements";
 
-    /** Rôle d'un PNJ. Pour l'instant les boutiques ; les métiers et l'hôtel des ventes viendront ensuite. */
-    public enum Role { SHOP }
+    /** Rôle d'un PNJ : boutique, ou PNJ de référence d'un métier (quêtes + boutique du métier). */
+    public enum Role { SHOP, JOB }
 
     /**
      * @param name     nom affiché au-dessus de la tête (MiniMessage)
      * @param skin     pseudo dont le PNJ prend le skin, ou null
      * @param texture  texture précise (valeur et signature, ex : MineSkin), prioritaire sur skin ; null sinon
      * @param useStock la boutique ne vend que ce qu'il y a dans le stock commun (sinon : quantité illimitée)
+     * @param job      métier dont ce PNJ est la référence (rôle JOB), null sinon
      */
-    public record Npc(String id, String name, String skin, Texture texture, Role role, boolean useStock) {
+    public record Npc(String id, String name, String skin, Texture texture, Role role, boolean useStock, String job) {
+
+        public Npc withName(String name) {
+            return new Npc(id, name, skin, texture, role, useStock, job);
+        }
+
+        public Npc withSkin(String skin, Texture texture) {
+            return new Npc(id, name, skin, texture, role, useStock, job);
+        }
+
+        public Npc withUseStock(boolean useStock) {
+            return new Npc(id, name, skin, texture, role, useStock, job);
+        }
     }
 
     public record Texture(String value, String signature) {
@@ -50,7 +63,9 @@ public class NpcRepository {
                 Column.of("texture_value", Column.Type.TEXT),
                 Column.of("texture_signature", Column.Type.TEXT),
                 Column.of("role", Column.Type.STRING).length(16).notNull(),
-                Column.of("use_stock", Column.Type.BOOLEAN).notNull());
+                Column.of("use_stock", Column.Type.BOOLEAN).notNull(),
+                Column.of("job", Column.Type.STRING).length(32));
+        database.addColumn(NPCS, Column.of("job", Column.Type.STRING).length(32)); // ajoutée en 1.1.0
         database.createTable(PLACEMENTS,
                 Column.of("id", Column.Type.LONG).autoIncrement(),
                 Column.of("npc", Column.Type.STRING).length(32).notNull(),
@@ -70,10 +85,10 @@ public class NpcRepository {
         return database.getFirst(NPCS, Map.of("id", id)).map(NpcRepository::toNpc);
     }
 
-    /** @return false si un PNJ porte déjà cet identifiant */
-    public boolean create(String id, Role role) {
-        return database.execute("INSERT IGNORE INTO " + database.table(NPCS) + " (id, name, role, use_stock) VALUES (?, ?, ?, ?)",
-                id, "<accent>" + id, role, false) > 0;
+    /** @param job métier dont ce PNJ est la référence (rôle JOB), null sinon. @return false si l'identifiant est pris */
+    public boolean create(String id, Role role, String job) {
+        return database.execute("INSERT IGNORE INTO " + database.table(NPCS) + " (id, name, role, use_stock, job) VALUES (?, ?, ?, ?, ?)",
+                id, "<accent>" + id, role, false, job) > 0;
     }
 
     public void save(Npc npc) {
@@ -85,6 +100,7 @@ public class NpcRepository {
         values.put("texture_signature", npc.texture() == null ? null : npc.texture().signature());
         values.put("role", npc.role());
         values.put("use_stock", npc.useStock());
+        values.put("job", npc.job());
         database.set(NPCS, values, "id");
     }
 
@@ -112,7 +128,7 @@ public class NpcRepository {
         String value = row.getString("texture_value");
         return new Npc(row.getString("id"), row.getString("name"), row.getString("skin"),
                 value == null ? null : new Texture(value, row.getString("texture_signature")),
-                Role.valueOf(row.getString("role")), row.getBoolean("use_stock"));
+                Role.valueOf(row.getString("role")), row.getBoolean("use_stock"), row.getString("job"));
     }
 
     private static Placement toPlacement(Row row) {

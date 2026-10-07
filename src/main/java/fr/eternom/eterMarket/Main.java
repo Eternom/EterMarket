@@ -3,8 +3,13 @@ package fr.eternom.eterMarket;
 import fr.eternom.eterLib.EterLib;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.sql.Database;
+import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.listeners.Commands;
 import fr.eternom.eterMarket.listeners.Events;
+import fr.eternom.eterMarket.module.job.JobGui;
+import fr.eternom.eterMarket.module.job.JobRepository;
+import fr.eternom.eterMarket.module.job.JobService;
+import fr.eternom.eterMarket.module.job.Jobs;
 import fr.eternom.eterMarket.module.npc.NpcRepository;
 import fr.eternom.eterMarket.module.npc.NpcService;
 import fr.eternom.eterMarket.module.npc.NpcSpawner;
@@ -14,9 +19,12 @@ import fr.eternom.eterMarket.module.shop.ShopService;
 import fr.eternom.eterMarket.module.stock.StockRepository;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
+
 /**
- * Le marché du réseau : PNJ (Mannequins) définis une fois et placés partout, boutiques (vente seule), stock commun.
- * Viendront ensuite la guilde des métiers (quêtes) et l'hôtel des ventes.
+ * Le marché du réseau : PNJ (Mannequins) définis une fois et placés partout, boutiques (vente seule), stock commun,
+ * guilde des métiers (quêtes de livraison quotidiennes). Viendra ensuite l'hôtel des ventes.
  */
 public final class Main extends JavaPlugin {
 
@@ -31,6 +39,8 @@ public final class Main extends JavaPlugin {
     private NpcSpawner spawner;
     private ShopRepository shopRepository;
     private ShopGui shops;
+    private Jobs jobs;
+    private JobGui jobGui;
 
     @Override
     public void onEnable() {
@@ -53,8 +63,17 @@ public final class Main extends JavaPlugin {
         npcs = new NpcService(this, new NpcRepository(database), spawner, lib.getMessenger(), messages, lib.getServerName());
         StockRepository stock = new StockRepository(database);
         shopRepository = new ShopRepository(database);
-        shops = new ShopGui(this, shopRepository, stock, new ShopService(this, stock, messages), npcs, messages,
+        JobRepository jobRepository = new JobRepository(database);
+        jobs = Jobs.load(getConfig().getConfigurationSection("jobs"), getLogger());
+        shops = new ShopGui(this, shopRepository, stock, new ShopService(this, stock, messages), npcs, jobRepository, messages,
                 lib.backButton(getConfig().getString("menus.shop.back-command", "")));
+        JobService jobService = new JobService(this, jobRepository, stock, jobs, messages, zone());
+        jobGui = new JobGui(this, jobService, jobRepository, shopRepository, messages,
+                lib.backButton(getConfig().getString("menus.jobs.back-command", "")));
+        // Boutiques et guilde se renvoient l'une à l'autre (onglets Quêtes / Boutique, éditeurs)
+        shops.linkJobs(jobGui::open, jobGui::openCatalog);
+        jobGui.linkShops((player, npc) -> shops.open(player, npc.id(), 0), (player, npc) -> shops.openEditor(player, npc.id(), 0));
+        Tasks.async(this, jobService::seedCatalogs, "Répertoire de quêtes de départ non posé");
 
         new Commands(this);
         new Events(this);
@@ -86,5 +105,24 @@ public final class Main extends JavaPlugin {
 
     public ShopGui getShops() {
         return shops;
+    }
+
+    public Jobs getJobs() {
+        return jobs;
+    }
+
+    public JobGui getJobGui() {
+        return jobGui;
+    }
+
+    /** Fuseau du changement de jour des quêtes (jobs.time-zone), Europe/Paris si invalide. */
+    private ZoneId zone() {
+        String zone = getConfig().getString("jobs.time-zone", "Europe/Paris");
+        try {
+            return ZoneId.of(zone);
+        } catch (DateTimeException e) {
+            getLogger().warning("jobs.time-zone invalide (" + zone + "), Europe/Paris utilisé");
+            return ZoneId.of("Europe/Paris");
+        }
     }
 }

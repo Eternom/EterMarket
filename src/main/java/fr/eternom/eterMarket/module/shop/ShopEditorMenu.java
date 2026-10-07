@@ -4,6 +4,7 @@ import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
 import fr.eternom.eterLib.helper.message.Messages;
+import fr.eternom.eterMarket.module.npc.NpcRepository.Role;
 import fr.eternom.eterMarket.module.shop.ShopGui.View;
 import fr.eternom.eterMarket.module.shop.ShopRepository.ShopItem;
 import net.kyori.adventure.text.Component;
@@ -29,7 +30,8 @@ import java.util.Set;
  *  ▢ · · · · · · · ▢
  *  ▢ · · · · · · · ▢
  *  ▣ · · · · · · · ▣
- *  ◀ + ⇄ ✎ « ☺ ▢ ▣ ▶     + = ajouter l'objet en main · ⇄ = vente sur stock · ✎ = nom · ☺ = skin
+ *  ◀ + ⇄ ✎ « ☺ ☰ ▣ ▶     + = ajouter l'objet en main · ⇄ = vente sur stock · ✎ = nom · ☺ = skin
+ *                        ☰ = répertoire des quêtes (PNJ de métier)
  * </pre>
  * Le stock commun est affiché pour chaque objet simple, même quand la boutique vend en quantité illimitée.
  */
@@ -41,6 +43,7 @@ class ShopEditorMenu implements Menu {
     private static final int RENAME = 48;
     private static final int BACK = 49;
     private static final int SKIN = 50;
+    private static final int CATALOG = 51;
     private static final int PREVIOUS = 45;
     private static final int NEXT = 53;
     private static final Set<Integer> ACCENT_FRAME = Set.of(0, 1, 7, 8, 9, 17, 36, 44, 52);
@@ -92,6 +95,12 @@ class ShopEditorMenu implements Menu {
                 Sounds.click(player);
                 gui.changeSkin(player, view, page);
             }
+            case CATALOG -> {
+                if (view.npc().role() == Role.JOB) {
+                    Sounds.page(player);
+                    gui.openCatalog(player, view.npc());
+                }
+            }
             case BACK -> gui.backButton().click(player);
             case PREVIOUS -> {
                 if (page > 0) {
@@ -135,6 +144,9 @@ class ShopEditorMenu implements Menu {
                 text(useStock ? "editor.stock.button-on" : "editor.stock.button-off"), List.of(text("editor.stock.lore")), useStock));
         inventory.setItem(RENAME, Items.item(Material.NAME_TAG, text("editor.rename.button"), List.of(text("editor.rename.lore"))));
         inventory.setItem(SKIN, Items.item(Material.ARMOR_STAND, text("editor.skin.button"), List.of(text("editor.skin.lore"))));
+        if (view.npc().role() == Role.JOB) {
+            inventory.setItem(CATALOG, Items.item(Material.WRITABLE_BOOK, text("editor.catalog.button"), List.of(text("editor.catalog.lore"))));
+        }
         inventory.setItem(BACK, gui.backButton().item(viewer));
     }
 
@@ -146,6 +158,11 @@ class ShopEditorMenu implements Menu {
         lore.add(item.stockable()
                 ? text("editor.item.stock", "amount", String.valueOf(view.stock().getOrDefault(item.item().getType(), 0L)))
                 : text("editor.item.not-stockable"));
+        Double reward = view.bestReward().get(item.item().getType());
+        double unitPrice = item.price() / item.item().getAmount();
+        if (item.stockable() && reward != null && unitPrice <= reward) {
+            lore.add(text("editor.item.arbitrage", "price", String.format("%.2f", unitPrice), "reward", String.format("%.2f", reward)));
+        }
         lore.add(text("editor.item.price"));
         lore.add(text("editor.item.remove"));
         display.lore(lore.stream().map(line -> line.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)).toList());
