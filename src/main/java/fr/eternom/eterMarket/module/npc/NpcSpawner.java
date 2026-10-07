@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 /**
  * Les PNJ de CE serveur, en Mannequins natifs. Ils ne sont jamais enregistrés dans le monde (non persistants) :
@@ -33,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class NpcSpawner {
 
     private final Messages messages;
+    private final Logger logger;
     private final NamespacedKey npcKey;
     private final Map<String, Npc> npcs = new ConcurrentHashMap<>();
     private final Map<Long, Placement> placements = new ConcurrentHashMap<>();
@@ -41,6 +43,7 @@ public class NpcSpawner {
 
     public NpcSpawner(JavaPlugin plugin, Messages messages) {
         this.messages = messages;
+        this.logger = plugin.getLogger();
         this.npcKey = new NamespacedKey(plugin, "npc");
     }
 
@@ -139,6 +142,13 @@ public class NpcSpawner {
             spawned.getPersistentDataContainer().set(npcKey, PersistentDataType.STRING, npc.id());
             configure(spawned, npc);
         });
+        if (!mannequin.isValid()) {
+            // Apparition annulée par un autre plugin (protection du spawn, WorldGuard, interdiction des créatures...)
+            logger.warning("PNJ " + npc.id() + " : apparition annulée par un autre plugin en " + placement.world() + " "
+                    + (int) placement.x() + " " + (int) placement.y() + " " + (int) placement.z()
+                    + " (protection du spawn, WorldGuard, interdiction des créatures ?)");
+            return;
+        }
         alive.put(placement.id(), mannequin.getUniqueId());
     }
 
