@@ -20,6 +20,8 @@ public class NpcRepository {
 
     private static final String NPCS = "npcs";
     private static final String PLACEMENTS = "placements";
+    /** Serveur des emplacements posés sur un lobby (EterHub installé) : communs à tous les lobbys, même créés plus tard. */
+    public static final String LOBBIES = "@lobbies";
 
     /** Rôle d'un PNJ : boutique, PNJ de référence d'un métier (quêtes + boutique du métier), ou hôtel des ventes. */
     public enum Role { SHOP, JOB, AUCTION }
@@ -118,6 +120,11 @@ public class NpcRepository {
         database.insert(PLACEMENTS, Map.of("npc", npc, "server", server, "world", world, "x", x, "y", y, "z", z, "yaw", yaw));
         return database.query("SELECT MAX(id) AS id FROM " + database.table(PLACEMENTS) + " WHERE npc = ? AND server = ?", npc, server)
                 .getFirst().getLong("id");
+    }
+
+    /** Un lobby : ses emplacements enregistrés sous son propre nom (avant 1.3.4) deviennent communs à tous les lobbys. */
+    public void shareWithLobbies(String server) {
+        database.update(PLACEMENTS, Map.of("server", LOBBIES), Map.of("server", server));
     }
 
     public void removePlacement(long id) {

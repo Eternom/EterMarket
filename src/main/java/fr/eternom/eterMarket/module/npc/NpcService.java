@@ -33,6 +33,7 @@ public class NpcService {
     private final NpcSpawner spawner;
     private final NetworkBus bus;
     private final Messages messages;
+    /** Clé des emplacements de ce serveur : son nom, ou NpcRepository.LOBBIES sur un lobby (communs à tous les lobbys). */
     private final String serverName;
 
     public NpcService(JavaPlugin plugin, NpcRepository repository, NpcSpawner spawner, NetworkBus bus,
@@ -89,6 +90,7 @@ public class NpcService {
                 placementId -> {
                     spawner.addPlacement(new Placement(placementId, id, serverName, world, at.getX(), at.getY(), at.getZ(), at.getYaw()));
                     messages.send(admin, "npc.placed", "npc", id);
+                    changed(); // sur un lobby : les autres lobbys l'affichent aussi
                 }, () -> messages.send(admin, "error.generic"));
     }
 
@@ -101,6 +103,7 @@ public class NpcService {
                 }, removed -> {
                     spawner.removePlacement(removed.id());
                     messages.send(admin, "npc.removed", "npc", removed.npc());
+                    changed();
                 }, () -> messages.send(admin, "error.generic")),
                 () -> messages.send(admin, "npc.none-near", "radius", String.valueOf((int) REMOVE_RADIUS)));
     }

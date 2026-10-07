@@ -16,7 +16,10 @@ Document développeur, à tenir à jour avec le code.
 
 **Définis une fois, placés partout.** `etermarket_npcs` : la définition (identifiant, nom MiniMessage, skin, rôle,
 vente sur stock), commune à tout le réseau. `etermarket_placements` : chaque emplacement (serveur, monde, position).
-Un même PNJ peut être placé autant de fois qu'on veut, sur n'importe quel serveur.
+Un même PNJ peut être placé autant de fois qu'on veut, sur n'importe quel serveur. **Sur un lobby** (EterHub installé), l'emplacement
+est enregistré sous `@lobbies` et vaut pour **tous les lobbys**, même ceux créés plus tard par l'orchestrateur (nom
+neuf) ; au démarrage, un lobby passe ses anciens emplacements (à son nom) en `@lobbies`. Placer ou retirer prévient
+les autres serveurs (rechargement).
 
 **Mannequins natifs** (`NpcSpawner`), pas de Citizens : skin par pseudo (résolu par le jeu) ou texture précise
 (valeur + signature, ex : MineSkin, prioritaire) ; invulnérables, immobiles, silencieux. **Jamais enregistrés dans le

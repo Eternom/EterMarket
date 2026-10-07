@@ -68,7 +68,13 @@ public final class Main extends JavaPlugin {
         NetworkBus bus = lib.network(this, "etermarket", messages);
 
         spawner = new NpcSpawner(this, messages);
-        npcs = new NpcService(this, new NpcRepository(database), spawner, bus, messages, lib.getServerName());
+        NpcRepository npcRepository = new NpcRepository(database);
+        // Un lobby (EterHub installé) partage ses PNJ avec tous les lobbys : ceux créés par l'orchestrateur ont un nom neuf
+        boolean lobby = getServer().getPluginManager().getPlugin("EterHub") != null;
+        if (lobby) {
+            npcRepository.shareWithLobbies(lib.getServerName());
+        }
+        npcs = new NpcService(this, npcRepository, spawner, bus, messages, lobby ? NpcRepository.LOBBIES : lib.getServerName());
         StockRepository stock = new StockRepository(database);
         shopRepository = new ShopRepository(database);
         JobRepository jobRepository = new JobRepository(database);
