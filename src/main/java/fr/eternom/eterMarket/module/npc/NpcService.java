@@ -1,6 +1,7 @@
 package fr.eternom.eterMarket.module.npc;
 
-import fr.eternom.eterLib.helper.cache.RedisMessenger;
+import com.google.gson.JsonObject;
+import fr.eternom.eterLib.helper.cache.NetworkBus;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Npc;
@@ -17,12 +18,11 @@ import java.util.regex.Pattern;
 
 /**
  * Gestion des PNJ par le staff : créer une définition, la placer ici, retirer un emplacement, modifier nom, skin et
- * vente sur stock, supprimer. Une définition modifiée sur un serveur est rechargée par les autres (Redis, canal
- * "etermarket") ; sans Redis, /market reload sur chaque serveur.
+ * vente sur stock, supprimer. Une définition modifiée sur un serveur est rechargée par les autres (bus réseau
+ * d'EterMarket, message "reload") ; sans Redis, /market reload sur chaque serveur.
  */
 public class NpcService {
 
-    private static final String CHANNEL = "etermarket";
     private static final String RELOAD = "reload";
     private static final Pattern ID = Pattern.compile("[a-z0-9_-]{1,32}");
     /** Distance max pour retirer le PNJ le plus proche. */
@@ -31,30 +31,23 @@ public class NpcService {
     private final JavaPlugin plugin;
     private final NpcRepository repository;
     private final NpcSpawner spawner;
-    private final RedisMessenger messenger; // null sans Redis
+    private final NetworkBus bus;
     private final Messages messages;
     private final String serverName;
 
-    public NpcService(JavaPlugin plugin, NpcRepository repository, NpcSpawner spawner, RedisMessenger messenger,
+    public NpcService(JavaPlugin plugin, NpcRepository repository, NpcSpawner spawner, NetworkBus bus,
                       Messages messages, String serverName) {
         this.plugin = plugin;
         this.repository = repository;
         this.spawner = spawner;
-        this.messenger = messenger;
+        this.bus = bus;
         this.messages = messages;
         this.serverName = serverName;
     }
 
     /** Démarrage : abonnement aux rechargements des autres serveurs, puis premier chargement. */
     public void start() {
-        if (messenger != null) {
-            messenger.subscribe(CHANNEL, message -> {
-                // "reload:<serveur>" : ce serveur a déjà appliqué sa propre modification
-                if (message.startsWith(RELOAD) && !message.equals(RELOAD + ":" + serverName) && plugin.isEnabled()) {
-                    Bukkit.getScheduler().runTask(plugin, this::reload);
-                }
-            });
-        }
+        bus.on(RELOAD, data -> reload()); // le serveur d'origine a déjà appliqué sa propre modification
         reload();
     }
 
@@ -138,17 +131,11 @@ public class NpcService {
         return spawner;
     }
 
-    /** Prévient les autres serveurs qu'une définition a changé (bloquant si appelé hors du thread principal). */
+    /** Prévient les autres serveurs qu'une définition a changé. */
     private void changed() {
-        if (messenger == null) {
-            return;
+        if (bus.isNetworked()) {
+            bus.publish(RELOAD, new JsonObject(),
+                    () -> plugin.getLogger().warning("Redis injoignable : les autres serveurs verront ce PNJ après /market reload"));
         }
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                messenger.publish(CHANNEL, RELOAD + ":" + serverName);
-            } catch (RuntimeException e) {
-                plugin.getLogger().warning("Redis injoignable : les autres serveurs verront ce PNJ après /market reload");
-            }
-        });
     }
 }

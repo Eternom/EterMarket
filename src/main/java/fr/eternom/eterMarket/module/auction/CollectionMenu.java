@@ -1,5 +1,6 @@
 package fr.eternom.eterMarket.module.auction;
 
+import fr.eternom.eterLib.helper.gui.Frame;
 import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
@@ -38,12 +39,7 @@ class CollectionMenu implements Menu {
         this.messages = gui.messages();
         this.viewer = viewer;
         this.inventory = Bukkit.createInventory(this, 54, text("auction.collection.title"));
-        ItemStack neutral = Items.pane(Material.GRAY_STAINED_GLASS_PANE);
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            if (!AuctionMenu.SLOTS.contains(slot)) {
-                inventory.setItem(slot, neutral);
-            }
-        }
+        Frame.fill(inventory, Material.ORANGE_STAINED_GLASS_PANE, AuctionMenu.SLOTS);
         for (int i = 0; i < parcels.size() && i < AuctionMenu.SLOTS.size(); i++) {
             Parcel parcel = parcels.get(i);
             parcelAtSlot.put(AuctionMenu.SLOTS.get(i), parcel);

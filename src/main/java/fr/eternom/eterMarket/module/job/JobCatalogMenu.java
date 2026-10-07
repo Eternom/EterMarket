@@ -1,5 +1,7 @@
 package fr.eternom.eterMarket.module.job;
 
+import fr.eternom.eterLib.helper.economy.Money;
+import fr.eternom.eterLib.helper.gui.Frame;
 import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
@@ -92,17 +94,7 @@ class JobCatalogMenu implements Menu {
     }
 
     private void render(int pages) {
-        ItemStack accent = Items.pane(Material.RED_STAINED_GLASS_PANE);
-        ItemStack neutral = Items.pane(Material.GRAY_STAINED_GLASS_PANE);
-        List<Integer> slots = new ArrayList<>();
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            boolean inside = slot / 9 >= 1 && slot / 9 <= 4 && slot % 9 >= 1 && slot % 9 <= 7;
-            if (inside) {
-                slots.add(slot);
-            } else {
-                inventory.setItem(slot, slot % 9 == 0 || slot % 9 == 8 ? accent : neutral);
-            }
-        }
+        Frame.draw(inventory, Material.RED_STAINED_GLASS_PANE);
         List<Component> info = new ArrayList<>();
         info.add(text("catalog.info-count", "count", String.valueOf(view.templates().size())));
         for (Tier tier : Tier.values()) {
@@ -116,8 +108,9 @@ class JobCatalogMenu implements Menu {
                 text("catalog.info", "job", gui.service().jobName(viewer, view.npc().job())), info));
         List<Template> shown = view.templates().stream().skip((long) page * PER_PAGE).limit(PER_PAGE).toList();
         for (int i = 0; i < shown.size(); i++) {
-            templateAtSlot.put(slots.get(i), shown.get(i));
-            inventory.setItem(slots.get(i), item(shown.get(i)));
+            int slot = 10 + i / 7 * 9 + i % 7; // 4 lignes de 7 à l'intérieur du cadre
+            templateAtSlot.put(slot, shown.get(i));
+            inventory.setItem(slot, item(shown.get(i)));
         }
         if (page > 0) {
             inventory.setItem(PREVIOUS, Items.item(Material.ARROW, text("catalog.previous"), List.of()));
@@ -137,10 +130,10 @@ class JobCatalogMenu implements Menu {
             lore.add(text("quest.item.objective").append(gui.texts().label(viewer, objective))
                     .append(text("catalog.item.amount", "amount", String.valueOf(objective.amount()))));
         }
-        lore.add(text("catalog.item.reward", "reward", gui.money(template.reward())));
+        lore.add(text("catalog.item.reward", "reward", Money.format(template.reward())));
         double cost = shopCost(template);
         if (cost >= 0 && cost <= template.reward()) {
-            lore.add(text("catalog.item.arbitrage", "price", gui.money(cost)));
+            lore.add(text("catalog.item.arbitrage", "price", Money.format(cost)));
         }
         lore.add(Component.empty());
         lore.add(text("catalog.item.edit"));

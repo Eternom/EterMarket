@@ -1,8 +1,7 @@
 package fr.eternom.eterMarket.module.auction;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import fr.eternom.eterLib.helper.cache.RedisMessenger;
+import fr.eternom.eterLib.helper.economy.Money;
+import fr.eternom.eterLib.helper.cache.NetworkBus;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.module.auction.AuctionRepository.Listing;
@@ -15,7 +14,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachmentInfo;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.math.BigDecimal;
@@ -35,7 +33,6 @@ import java.util.UUID;
 public class AuctionService {
 
     public static final String LISTINGS_PERMISSION = "etermarket.auction.listings.";
-    private static final String CHANNEL = "etermarket:auction";
 
     /** Réglages (config.yml > auction). fee et tax : fractions (0.01 = 1 %). */
     public record Settings(Duration duration, double fee, double tax, double minPrice, double maxPrice, int defaultListings) {
@@ -46,30 +43,20 @@ public class AuctionService {
     private final JavaPlugin plugin;
     private final AuctionRepository repository;
     private final Settings settings;
-    private final RedisMessenger messenger; // null sans Redis
+    private final NetworkBus bus;
     private final Messages messages;
 
-    public AuctionService(JavaPlugin plugin, AuctionRepository repository, Settings settings, RedisMessenger messenger,
+    public AuctionService(JavaPlugin plugin, AuctionRepository repository, Settings settings, NetworkBus bus,
                           Messages messages) {
         this.plugin = plugin;
         this.repository = repository;
         this.settings = settings;
-        this.messenger = messenger;
+        this.bus = bus;
         this.messages = messages;
     }
 
-    /** Démarrage : messages « ton objet s'est vendu » des autres serveurs, et expiration des annonces chaque minute. */
+    /** Démarrage : expiration des annonces chaque minute. */
     public void start() {
-        if (messenger != null) {
-            messenger.subscribe(CHANNEL, json -> {
-                JsonObject data = JsonParser.parseString(json).getAsJsonObject();
-                UUID seller = UUID.fromString(data.get("seller").getAsString());
-                if (plugin.isEnabled()) {
-                    Bukkit.getScheduler().runTask(plugin, () -> notifySoldLocal(seller, data.get("item").getAsString(),
-                            data.get("amount").getAsString()));
-                }
-            });
-        }
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
             try {
                 repository.expire();
@@ -101,7 +88,7 @@ public class AuctionService {
 
     /** Thread principal : met en vente l'objet en main au prix donné. */
     public void sellHeld(Player player, double price, Runnable after) {
-        Economy economy = economy();
+        Economy economy = Money.economy();
         if (economy == null) {
             messages.send(player, "economy.unavailable");
             return;
@@ -152,7 +139,7 @@ public class AuctionService {
 
     /** Thread principal : achète une annonce. */
     public void buy(Player player, Listing listing, Runnable after) {
-        Economy economy = economy();
+        Economy economy = Money.economy();
         if (economy == null) {
             messages.send(player, "economy.unavailable");
             return;
@@ -228,30 +215,9 @@ public class AuctionService {
         messages.send(player, "auction.to-collection");
     }
 
+    /** Le vendeur est prévenu où qu'il soit sur le réseau. */
     private void notifySold(UUID seller, String item, String amount) {
-        if (Bukkit.getPlayer(seller) != null || messenger == null) {
-            notifySoldLocal(seller, item, amount);
-            return;
-        }
-        JsonObject data = new JsonObject();
-        data.addProperty("seller", seller.toString());
-        data.addProperty("item", item);
-        data.addProperty("amount", amount);
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                messenger.publish(CHANNEL, data.toString());
-            } catch (RuntimeException ignored) {
-                // Redis en panne : le vendeur verra son argent sans le message
-            }
-        });
-    }
-
-    private void notifySoldLocal(UUID seller, String item, String amount) {
-        Player player = Bukkit.getPlayer(seller);
-        if (player != null) {
-            messages.send(player, "auction.sold", "item", item, "amount", amount);
-            player.playSound(player, Sound.BLOCK_NOTE_BLOCK_BELL, 0.6f, 1.4f);
-        }
+        bus.notify(seller, "auction.sold", true, "item", item, "amount", amount);
     }
 
     static String itemName(ItemStack item) {
@@ -275,8 +241,4 @@ public class AuctionService {
         return BigDecimal.valueOf(amount).setScale(Math.max(0, digits), RoundingMode.HALF_UP).doubleValue();
     }
 
-    static Economy economy() {
-        RegisteredServiceProvider<Economy> provider = Bukkit.getServicesManager().getRegistration(Economy.class);
-        return provider == null ? null : provider.getProvider();
-    }
 }

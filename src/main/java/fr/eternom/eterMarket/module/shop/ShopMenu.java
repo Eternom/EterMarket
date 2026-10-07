@@ -1,5 +1,7 @@
 package fr.eternom.eterMarket.module.shop;
 
+import fr.eternom.eterLib.helper.economy.Money;
+import fr.eternom.eterLib.helper.gui.Frame;
 import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
@@ -22,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Boutique d'un PNJ, 6 lignes :
@@ -44,7 +45,6 @@ class ShopMenu implements Menu {
     private static final int BACK = 49;
     private static final int NEXT = 53;
     private static final int EMPTY = 22;
-    private static final Set<Integer> ACCENT_FRAME = Set.of(0, 1, 7, 8, 9, 17, 36, 44, 46, 52);
 
     private final ShopGui gui;
     private final Messages messages;
@@ -97,9 +97,9 @@ class ShopMenu implements Menu {
     }
 
     private void render() {
-        frame(inventory, Material.ORANGE_STAINED_GLASS_PANE, ACCENT_FRAME);
+        Frame.fill(inventory, Material.ORANGE_STAINED_GLASS_PANE, SLOTS);
         inventory.setItem(INFO, Items.head(viewer.getPlayerProfile(), text("shop.menu.player", "player", viewer.getName()),
-                List.of(text("shop.menu.balance", "amount", gui.money(view.balance())))));
+                List.of(text("shop.menu.balance", "amount", Money.format(view.balance())))));
 
         int start = page * SLOTS.size();
         List<ShopItem> items = view.items();
@@ -122,7 +122,7 @@ class ShopMenu implements Menu {
         ItemStack display = item.item().clone();
         List<Component> lore = new ArrayList<>(display.lore() == null ? List.of() : display.lore());
         lore.add(Component.empty());
-        lore.add(text("shop.item.price", "price", gui.money(item.price()), "amount", String.valueOf(item.item().getAmount())));
+        lore.add(text("shop.item.price", "price", Money.format(item.price()), "amount", String.valueOf(item.item().getAmount())));
         if (view.npc().useStock() && item.stockable()) {
             long amount = view.stock().getOrDefault(item.item().getType(), 0L);
             lore.add(soldOut(item) ? text("shop.item.sold-out") : text("shop.item.stock", "amount", String.valueOf(amount)));
@@ -148,17 +148,6 @@ class ShopMenu implements Menu {
 
     static int pageCount(int items) {
         return Math.max(1, (items + SLOTS.size() - 1) / SLOTS.size());
-    }
-
-    /** Cadre : vitres de couleur aux coins et au centre des bords, grises ailleurs. */
-    static void frame(Inventory inventory, Material accentPane, Set<Integer> accentSlots) {
-        ItemStack accent = Items.pane(accentPane);
-        ItemStack neutral = Items.pane(Material.GRAY_STAINED_GLASS_PANE);
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            if (!SLOTS.contains(slot)) {
-                inventory.setItem(slot, accentSlots.contains(slot) ? accent : neutral);
-            }
-        }
     }
 
     static void pages(Inventory inventory, int page, int pages, Messages messages, Player viewer) {

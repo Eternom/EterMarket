@@ -1,10 +1,12 @@
 package fr.eternom.eterMarket.module.job;
 
+import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.EterLib;
 import fr.eternom.eterLib.helper.gui.BackButton;
 import fr.eternom.eterLib.helper.gui.Dialogs;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
+import fr.eternom.eterMarket.helper.Inputs;
 import fr.eternom.eterMarket.module.job.JobRepository.Quest;
 import fr.eternom.eterMarket.module.job.JobRepository.Template;
 import fr.eternom.eterMarket.module.job.JobService.Board;
@@ -106,7 +108,7 @@ public class JobGui {
         player.closeInventory();
         DialogBase base = DialogBase.builder(messages.get(player, "quest.reroll.title"))
                 .body(List.of(DialogBody.plainMessage(messages.get(player, "quest.reroll.body",
-                        "price", service.jobs().rerollCost() > 0 ? money(service.jobs().rerollCost()) : messages.plain(player, "quest.reroll.free")))))
+                        "price", service.jobs().rerollCost() > 0 ? Money.format(service.jobs().rerollCost()) : messages.plain(player, "quest.reroll.free")))))
                 .build();
         Dialogs.show(plugin, player, base, messages.get(player, "quest.reroll.confirm"), messages.get(player, "dialog.cancel"),
                 response -> service.reroll(player, board.job(), quest, () -> open(player, npc)),
@@ -120,7 +122,7 @@ public class JobGui {
                 .body(List.of(DialogBody.plainMessage(join.current().isEmpty()
                         ? messages.get(player, "job.join.body-first", "job", job)
                         : messages.get(player, "job.join.body-change", "job", job,
-                        "current", service.jobName(player, join.current().get().job()), "price", money(service.jobs().changeCost())))))
+                        "current", service.jobName(player, join.current().get().job()), "price", Money.format(service.jobs().changeCost())))))
                 .build();
         Dialogs.show(plugin, player, base, messages.get(player, "job.join.confirm"), messages.get(player, "dialog.cancel"),
                 response -> service.join(player, join, () -> open(player, npc)),
@@ -204,9 +206,9 @@ public class JobGui {
                 return;
             }
             String target = String.valueOf(response.getText("target")).trim().toUpperCase(Locale.ROOT).replace("MINECRAFT:", "");
-            Objective objective = new Objective(kind, target.isEmpty() ? Objective.ANY : target, (int) parse(response.getText("amount")));
+            Objective objective = new Objective(kind, target.isEmpty() ? Objective.ANY : target, (int) Inputs.number(response.getText("amount")));
             Tier tier = Tier.of(response.getText("tier"));
-            double reward = parse(response.getText("reward"));
+            double reward = Inputs.number(response.getText("reward"));
             if (!objective.valid() || (kind == Objective.Kind.BREAK && target.isEmpty()) || tier == null || reward <= 0) {
                 messages.send(admin, "catalog.action.invalid");
                 openCatalog(admin, npc, page);
@@ -255,10 +257,10 @@ public class JobGui {
                 .build();
         Dialogs.show(plugin, admin, base, messages.get(admin, "editor.save"), messages.get(admin, "dialog.cancel"), response -> {
             Tier newTier = Tier.of(response.getText("tier"));
-            double newReward = parse(response.getText("reward"));
+            double newReward = Inputs.number(response.getText("reward"));
             List<Objective> edited = new ArrayList<>();
             for (int i = 0; i < objectives.size(); i++) {
-                int amount = (int) parse(response.getText("amount" + i));
+                int amount = (int) Inputs.number(response.getText("amount" + i));
                 if (amount > 0) {
                     edited.add(new Objective(objectives.get(i).kind(), objectives.get(i).target(), amount));
                 }
@@ -288,9 +290,6 @@ public class JobGui {
 
     // ---------- Outils ----------
 
-    String money(double amount) {
-        return JobService.money(amount);
-    }
 
     String timeUntilTomorrow(Player viewer) {
         return EterLib.get().formatDuration(viewer, service.secondsUntilTomorrow());
@@ -320,12 +319,4 @@ public class JobGui {
         }
     }
 
-    private static double parse(String text) {
-        try {
-            double value = text == null ? 0 : Double.parseDouble(text.trim().replace(',', '.'));
-            return Double.isFinite(value) ? value : 0;
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
 }

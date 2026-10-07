@@ -1,10 +1,12 @@
 package fr.eternom.eterMarket.module.auction;
 
+import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.EterLib;
 import fr.eternom.eterLib.helper.gui.BackButton;
 import fr.eternom.eterLib.helper.gui.Dialogs;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
+import fr.eternom.eterMarket.helper.Inputs;
 import fr.eternom.eterMarket.module.auction.AuctionRepository.Listing;
 import fr.eternom.eterMarket.module.auction.AuctionRepository.Parcel;
 import io.papermc.paper.registry.data.dialog.DialogBase;
@@ -48,7 +50,7 @@ public class AuctionGui {
     }
 
     void open(Player player, int page, String filter) {
-        Economy economy = AuctionService.economy();
+        Economy economy = Money.economy();
         int limit = service.listingLimit(player);
         Tasks.async(plugin, player, () -> {
             List<Listing> listings = repository.active().stream()
@@ -89,7 +91,7 @@ public class AuctionGui {
                 .build();
         Dialogs.show(plugin, player, base, messages.get(player, "auction.sell.confirm"), messages.get(player, "dialog.cancel"),
                 response -> {
-                    double price = parse(response.getText("price"));
+                    double price = Inputs.number(response.getText("price"));
                     if (price <= 0) {
                         messages.send(player, "auction.price-invalid");
                         open(player);
@@ -104,7 +106,7 @@ public class AuctionGui {
         player.closeInventory();
         DialogBase base = DialogBase.builder(messages.get(player, "auction.buy.title"))
                 .body(List.of(DialogBody.item(listing.item().clone()).build(),
-                        DialogBody.plainMessage(messages.get(player, "auction.buy.body", "price", money(listing.price()),
+                        DialogBody.plainMessage(messages.get(player, "auction.buy.body", "price", Money.format(listing.price()),
                                 "seller", listing.sellerName()))))
                 .build();
         Dialogs.show(plugin, player, base, messages.get(player, "auction.buy.confirm"), messages.get(player, "dialog.cancel"),
@@ -143,10 +145,6 @@ public class AuctionGui {
 
     // ---------- Outils ----------
 
-    String money(double amount) {
-        Economy economy = AuctionService.economy();
-        return economy == null ? String.valueOf(amount) : economy.format(amount);
-    }
 
     String timeLeft(Player viewer, Listing listing) {
         return EterLib.get().formatDuration(viewer, Math.max(0, (listing.expiresAt() - System.currentTimeMillis()) / 1000));
@@ -170,12 +168,4 @@ public class AuctionGui {
         return String.valueOf(Math.round(fraction * 1000) / 10.0).replace(".0", "");
     }
 
-    private static double parse(String text) {
-        try {
-            double value = text == null ? 0 : Double.parseDouble(text.trim().replace(',', '.'));
-            return Double.isFinite(value) ? value : 0;
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
 }

@@ -4,18 +4,7 @@
 # Les valeurs entre <> comme <npc> sont remplies par le plugin. Pour afficher un "<", écrire \< entre 'guillemets simples'.
 # Une clé absente reprend le texte intégré au plugin : tu peux ne garder que les lignes que tu modifies.
 # Le préfixe des messages (« Core ») est commun à tous les plugins : EterLib/config.yml > language.prefix.
-
-command:
-  players-only: "<error>Commande réservée aux joueurs."
-
-error:
-  generic: "<error>Une erreur est survenue, réessaie plus tard."
-
-economy:
-  unavailable: "<error>L'économie n'est pas disponible pour le moment."
-
-dialog:
-  cancel: "Annuler"
+# Textes communs (« Annuler », « Joueur inconnu », « Commande réservée aux joueurs »...) : dans EterLib/lang/, pour tous les plugins.
 
 npc:
   role:

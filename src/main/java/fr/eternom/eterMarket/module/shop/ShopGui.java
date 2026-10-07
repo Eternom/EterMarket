@@ -1,9 +1,11 @@
 package fr.eternom.eterMarket.module.shop;
 
+import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.helper.gui.BackButton;
 import fr.eternom.eterLib.helper.gui.Dialogs;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
+import fr.eternom.eterMarket.helper.Inputs;
 import fr.eternom.eterMarket.module.job.JobRepository;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Npc;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Texture;
@@ -78,7 +80,7 @@ public class ShopGui {
             messages.send(player, "npc.unknown", "npc", npcId);
             return;
         }
-        Economy economy = ShopService.economy();
+        Economy economy = Money.economy();
         Tasks.async(plugin, player, () -> {
             List<ShopItem> items = shops.items(npcId);
             Map<Material, Long> amounts = new HashMap<>();
@@ -118,7 +120,7 @@ public class ShopGui {
         player.closeInventory();
         DialogBase base = DialogBase.builder(messages.get(player, "shop.quantity.title"))
                 .body(List.of(DialogBody.item(item.item().clone()).build(),
-                        DialogBody.plainMessage(messages.get(player, "shop.quantity.body", "price", money(item.price())))))
+                        DialogBody.plainMessage(messages.get(player, "shop.quantity.body", "price", Money.format(item.price())))))
                 .inputs(List.of(DialogInput.numberRange("lots", messages.get(player, "shop.quantity.label"), 1, MAX_LOTS)
                         .step(1f).initial(1f).build()))
                 .build();
@@ -142,7 +144,7 @@ public class ShopGui {
             shops.add(view.npc().id(), held, price);
             return price;
         }, added -> {
-            messages.send(admin, "editor.added", "price", money(added));
+            messages.send(admin, "editor.added", "price", Money.format(added));
             openEditor(admin, view.npc().id(), page);
         }, () -> messages.send(admin, "error.generic")), page);
     }
@@ -224,7 +226,7 @@ public class ShopGui {
                         .initial(current > 0 ? String.valueOf((long) current) : "").maxLength(12).build()))
                 .build();
         Dialogs.show(plugin, admin, base, messages.get(admin, "editor.save"), messages.get(admin, "dialog.cancel"), response -> {
-            double price = parsePrice(response.getText("price"));
+            double price = Inputs.number(response.getText("price"));
             if (price <= 0) {
                 messages.send(admin, "editor.price.invalid");
                 openEditor(admin, view.npc().id(), page);
@@ -236,10 +238,6 @@ public class ShopGui {
 
     // ---------- Outils ----------
 
-    String money(double amount) {
-        Economy economy = ShopService.economy();
-        return economy == null ? String.valueOf(amount) : economy.format(amount);
-    }
 
     Messages messages() {
         return messages;
@@ -249,14 +247,6 @@ public class ShopGui {
         return backButton;
     }
 
-    private static double parsePrice(String text) {
-        try {
-            double price = text == null ? 0 : Double.parseDouble(text.trim().replace(',', '.'));
-            return Double.isFinite(price) ? price : 0;
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
 
     private static String blankToNull(String text) {
         return text == null || text.isBlank() ? null : text.trim();

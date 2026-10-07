@@ -1,6 +1,7 @@
 package fr.eternom.eterMarket;
 
 import fr.eternom.eterLib.EterLib;
+import fr.eternom.eterLib.helper.cache.NetworkBus;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.sql.Database;
 import fr.eternom.eterLib.helper.task.Tasks;
@@ -32,8 +33,8 @@ import java.time.ZoneId;
  */
 public final class Main extends JavaPlugin {
 
-    /** Version minimale d'EterLib : étiquettes du Tab (métier) depuis 1.5.4. */
-    private static final String REQUIRED_ETERLIB = "1.5.4";
+    /** Version minimale d'EterLib : textes communs et outils partagés (Frame, Money, NetworkBus) depuis 1.6.0. */
+    private static final String REQUIRED_ETERLIB = "1.6.0";
 
     /** Préfixe des tables d'EterMarket dans la base commune : etermarket_npcs, etermarket_stock... */
     private static final String TABLE_PREFIX = "etermarket_";
@@ -43,7 +44,6 @@ public final class Main extends JavaPlugin {
     private NpcSpawner spawner;
     private ShopRepository shopRepository;
     private ShopGui shops;
-    private Jobs jobs;
     private JobGui jobGui;
     private JobService jobService;
     private AuctionGui auctions;
@@ -64,13 +64,15 @@ public final class Main extends JavaPlugin {
         EterLib lib = EterLib.get();
         messages = lib.messages(this, "en_us", "fr_fr");
         Database database = lib.database(TABLE_PREFIX);
+        // Messages entre serveurs : rechargement des PNJ, « ton objet s'est vendu »
+        NetworkBus bus = lib.network(this, "etermarket", messages);
 
         spawner = new NpcSpawner(this, messages);
-        npcs = new NpcService(this, new NpcRepository(database), spawner, lib.getMessenger(), messages, lib.getServerName());
+        npcs = new NpcService(this, new NpcRepository(database), spawner, bus, messages, lib.getServerName());
         StockRepository stock = new StockRepository(database);
         shopRepository = new ShopRepository(database);
         JobRepository jobRepository = new JobRepository(database);
-        jobs = Jobs.load(getConfig().getConfigurationSection("jobs"), getLogger());
+        Jobs jobs = Jobs.load(getConfig().getConfigurationSection("jobs"), getLogger());
         shops = new ShopGui(this, shopRepository, stock, new ShopService(this, stock, messages), npcs, jobRepository, messages,
                 lib.backButton(getConfig().getString("menus.shop.back-command", "")));
         jobService = new JobService(this, jobRepository, stock, jobs, messages, zone());
@@ -82,7 +84,7 @@ public final class Main extends JavaPlugin {
         Tasks.async(this, jobService::seedCatalogs, "Répertoire de quêtes de départ non posé");
 
         AuctionRepository auctionRepository = new AuctionRepository(database);
-        AuctionService auctionService = new AuctionService(this, auctionRepository, auctionSettings(), lib.getMessenger(), messages);
+        AuctionService auctionService = new AuctionService(this, auctionRepository, auctionSettings(), bus, messages);
         auctions = new AuctionGui(this, auctionRepository, auctionService, messages,
                 lib.backButton(getConfig().getString("menus.auction.back-command", "")));
         auctionService.start();
@@ -121,10 +123,6 @@ public final class Main extends JavaPlugin {
 
     public ShopGui getShops() {
         return shops;
-    }
-
-    public Jobs getJobs() {
-        return jobs;
     }
 
     public JobGui getJobGui() {

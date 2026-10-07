@@ -1,5 +1,7 @@
 package fr.eternom.eterMarket.module.shop;
 
+import fr.eternom.eterLib.helper.economy.Money;
+import fr.eternom.eterLib.helper.gui.Frame;
 import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
@@ -20,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Éditeur d'une boutique (staff, cadre rouge), 6 lignes :
@@ -46,7 +47,6 @@ class ShopEditorMenu implements Menu {
     private static final int CATALOG = 51;
     private static final int PREVIOUS = 45;
     private static final int NEXT = 53;
-    private static final Set<Integer> ACCENT_FRAME = Set.of(0, 1, 7, 8, 9, 17, 36, 44, 52);
 
     private final ShopGui gui;
     private final Messages messages;
@@ -125,7 +125,7 @@ class ShopEditorMenu implements Menu {
     }
 
     private void render() {
-        ShopMenu.frame(inventory, Material.RED_STAINED_GLASS_PANE, ACCENT_FRAME);
+        Frame.fill(inventory, Material.RED_STAINED_GLASS_PANE, ShopMenu.SLOTS);
         boolean useStock = view.npc().useStock();
         inventory.setItem(INFO, Items.item(Material.COMMAND_BLOCK, text("editor.info.name", "npc", view.npc().id()), List.of(
                 text("editor.info.items", "count", String.valueOf(view.items().size())),
@@ -154,7 +154,7 @@ class ShopEditorMenu implements Menu {
         ItemStack display = item.item().clone();
         List<Component> lore = new ArrayList<>(display.lore() == null ? List.of() : display.lore());
         lore.add(Component.empty());
-        lore.add(text("shop.item.price", "price", gui.money(item.price()), "amount", String.valueOf(item.item().getAmount())));
+        lore.add(text("shop.item.price", "price", Money.format(item.price()), "amount", String.valueOf(item.item().getAmount())));
         lore.add(item.stockable()
                 ? text("editor.item.stock", "amount", String.valueOf(view.stock().getOrDefault(item.item().getType(), 0L)))
                 : text("editor.item.not-stockable"));

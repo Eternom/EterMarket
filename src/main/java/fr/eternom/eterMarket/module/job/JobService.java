@@ -1,5 +1,6 @@
 package fr.eternom.eterMarket.module.job;
 
+import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.module.job.JobRepository.Member;
@@ -7,14 +8,12 @@ import fr.eternom.eterMarket.module.job.JobRepository.Quest;
 import fr.eternom.eterMarket.module.job.JobRepository.Template;
 import fr.eternom.eterMarket.module.stock.StockRepository;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.time.Duration;
@@ -109,7 +108,7 @@ public class JobService {
     /** Thread principal : rejoindre le métier (gratuit la première fois, sinon payant et limité dans le temps). */
     public void join(Player player, Board.Join join, Runnable after) {
         boolean free = join.current().isEmpty();
-        Economy economy = economy();
+        Economy economy = Money.economy();
         if (!free && jobs.changeCost() > 0 && economy == null) {
             messages.send(player, "economy.unavailable");
             return;
@@ -140,7 +139,7 @@ public class JobService {
 
     /** Thread principal : valider une quête auprès du PNJ. */
     public void deliver(Player player, Quest shown, Runnable after) {
-        Economy economy = economy();
+        Economy economy = Money.economy();
         if (economy == null) {
             messages.send(player, "economy.unavailable");
             return;
@@ -190,7 +189,7 @@ public class JobService {
      * reroll-cost. La progression de l'ancienne est perdue.
      */
     public void reroll(Player player, String job, Quest quest, Runnable after) {
-        Economy economy = economy();
+        Economy economy = Money.economy();
         if (!jobs.rerollEnabled() || quest.done()) {
             return;
         }
@@ -229,7 +228,7 @@ public class JobService {
             }
             return "quest.rerolled";
         }, result -> {
-            messages.send(player, result, "price", money(jobs.rerollCost()));
+            messages.send(player, result, "price", Money.format(jobs.rerollCost()));
             if (result.equals("quest.rerolled")) {
                 player.playSound(player, Sound.ITEM_BOOK_PAGE_TURN, 0.8f, 1f);
             }
@@ -361,13 +360,5 @@ public class JobService {
         }
     }
 
-    static String money(double amount) {
-        Economy economy = economy();
-        return economy == null ? String.valueOf(amount) : economy.format(amount);
-    }
 
-    private static Economy economy() {
-        RegisteredServiceProvider<Economy> provider = Bukkit.getServicesManager().getRegistration(Economy.class);
-        return provider == null ? null : provider.getProvider();
-    }
 }

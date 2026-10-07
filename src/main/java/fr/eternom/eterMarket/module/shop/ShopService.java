@@ -1,5 +1,6 @@
 package fr.eternom.eterMarket.module.shop;
 
+import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Npc;
@@ -12,7 +13,6 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class ShopService {
 
     /** Thread principal. lots : nombre de lots achetés (un lot = l'objet de la boutique avec sa quantité). */
     public void buy(Player player, Npc npc, ShopItem item, int lots, Runnable after) {
-        Economy economy = economy();
+        Economy economy = Money.economy();
         if (economy == null) {
             messages.send(player, "economy.unavailable");
             return;
@@ -100,9 +100,4 @@ public class ShopService {
         return copy.addItem(stacks.stream().map(ItemStack::clone).toArray(ItemStack[]::new)).isEmpty();
     }
 
-    /** null sans économie. Lu à chaque fois : EterEconomy peut être chargé après nous. */
-    static Economy economy() {
-        RegisteredServiceProvider<Economy> provider = Bukkit.getServicesManager().getRegistration(Economy.class);
-        return provider == null ? null : provider.getProvider();
-    }
 }

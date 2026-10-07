@@ -1,6 +1,8 @@
 package fr.eternom.eterMarket.module.job;
 
+import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.EterLib;
+import fr.eternom.eterLib.helper.gui.Frame;
 import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
@@ -14,11 +16,9 @@ import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Rejoindre la guilde d'un métier, 3 lignes : le métier au centre (gratuit la première fois ; sinon prix du changement
@@ -29,7 +29,6 @@ class JobJoinMenu implements Menu {
     private static final int SHOP = 11;
     private static final int JOIN = 13;
     private static final int BACK = 22;
-    private static final Set<Integer> ACCENT_FRAME = Set.of(0, 1, 7, 8, 9, 17, 18, 19, 25, 26);
 
     private final JobGui gui;
     private final Messages messages;
@@ -71,13 +70,7 @@ class JobJoinMenu implements Menu {
     }
 
     private void render() {
-        ItemStack accent = Items.pane(Material.ORANGE_STAINED_GLASS_PANE);
-        ItemStack neutral = Items.pane(Material.GRAY_STAINED_GLASS_PANE);
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            if (slot / 9 != 1 || slot % 9 == 0 || slot % 9 == 8) {
-                inventory.setItem(slot, ACCENT_FRAME.contains(slot) ? accent : neutral);
-            }
-        }
+        Frame.draw(inventory, Material.ORANGE_STAINED_GLASS_PANE);
         List<Component> lore = new ArrayList<>();
         lore.add(text("job.join.description." + join.job()));
         lore.add(Component.empty());
@@ -85,7 +78,7 @@ class JobJoinMenu implements Menu {
             lore.add(text("job.join.free"));
         } else {
             lore.add(text("job.join.current", "job", jobName(join.current().get().job())));
-            lore.add(text("job.join.cost", "price", gui.money(gui.service().jobs().changeCost())));
+            lore.add(text("job.join.cost", "price", Money.format(gui.service().jobs().changeCost())));
         }
         lore.add(join.cooldownSeconds() > 0
                 ? text("job.join.cooldown", "time", EterLib.get().formatDuration(viewer, join.cooldownSeconds()))

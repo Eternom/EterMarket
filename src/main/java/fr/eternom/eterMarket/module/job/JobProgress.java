@@ -1,5 +1,6 @@
 package fr.eternom.eterMarket.module.job;
 
+import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.EterLib;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.sidebar.SidebarOverrides;
@@ -259,7 +260,7 @@ public class JobProgress {
             lines.add(texts.objective(player, objective, QuestTexts.have(player, quest, objective)));
         }
         lines.add(Component.empty());
-        lines.add(messages.get(player, "quest.sidebar.reward", "reward", JobService.money(quest.reward())));
+        lines.add(messages.get(player, "quest.sidebar.reward", "reward", Money.format(quest.reward())));
         lines.add(messages.get(player, QuestTexts.ready(player, quest) ? "quest.sidebar.ready" : "quest.sidebar.todo"));
         return new SidebarOverrides.Content(
                 messages.get(player, "quest.sidebar.title", "job", service.jobName(player, state.job())), lines);

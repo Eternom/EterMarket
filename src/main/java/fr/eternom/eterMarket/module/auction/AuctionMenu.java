@@ -1,5 +1,7 @@
 package fr.eternom.eterMarket.module.auction;
 
+import fr.eternom.eterLib.helper.economy.Money;
+import fr.eternom.eterLib.helper.gui.Frame;
 import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
@@ -20,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Hôtel des ventes, 6 lignes :
@@ -45,7 +46,6 @@ class AuctionMenu implements Menu {
     private static final int COLLECTION = 51;
     private static final int NEXT = 53;
     private static final int EMPTY = 22;
-    private static final Set<Integer> ACCENT_FRAME = Set.of(0, 1, 7, 8, 9, 17, 36, 44, 50, 52);
 
     private final AuctionGui gui;
     private final Messages messages;
@@ -124,15 +124,9 @@ class AuctionMenu implements Menu {
     }
 
     private void render() {
-        ItemStack accent = Items.pane(Material.ORANGE_STAINED_GLASS_PANE);
-        ItemStack neutral = Items.pane(Material.GRAY_STAINED_GLASS_PANE);
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            if (!SLOTS.contains(slot)) {
-                inventory.setItem(slot, ACCENT_FRAME.contains(slot) ? accent : neutral);
-            }
-        }
+        Frame.fill(inventory, Material.ORANGE_STAINED_GLASS_PANE, SLOTS);
         inventory.setItem(INFO, Items.head(viewer.getPlayerProfile(), text("auction.menu.player", "player", viewer.getName()), List.of(
-                text("auction.menu.balance", "amount", gui.money(browse.balance())),
+                text("auction.menu.balance", "amount", Money.format(browse.balance())),
                 text("auction.menu.listings", "count", String.valueOf(browse.ownListings()), "limit", String.valueOf(browse.limit())),
                 text("auction.menu.parcels", "count", String.valueOf(browse.parcels())))));
 
@@ -170,7 +164,7 @@ class AuctionMenu implements Menu {
         ItemStack display = listing.item().clone();
         List<Component> lore = new ArrayList<>(display.lore() == null ? List.of() : display.lore());
         lore.add(Component.empty());
-        lore.add(text("auction.item.price", "price", gui.money(listing.price())));
+        lore.add(text("auction.item.price", "price", Money.format(listing.price())));
         lore.add(text("auction.item.seller", "seller", listing.sellerName()));
         lore.add(text("auction.item.time", "time", gui.timeLeft(viewer, listing)));
         lore.add(text(listing.seller().equals(viewer.getUniqueId()) ? "auction.item.yours" : "auction.item.buy"));

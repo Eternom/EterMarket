@@ -1,5 +1,7 @@
 package fr.eternom.eterMarket.module.auction;
 
+import fr.eternom.eterLib.helper.economy.Money;
+import fr.eternom.eterLib.helper.gui.Frame;
 import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
@@ -35,12 +37,7 @@ class MyListingsMenu implements Menu {
         this.messages = gui.messages();
         this.viewer = viewer;
         this.inventory = Bukkit.createInventory(this, 54, text("auction.mine.title"));
-        ItemStack neutral = Items.pane(Material.GRAY_STAINED_GLASS_PANE);
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            if (!AuctionMenu.SLOTS.contains(slot)) {
-                inventory.setItem(slot, neutral);
-            }
-        }
+        Frame.fill(inventory, Material.ORANGE_STAINED_GLASS_PANE, AuctionMenu.SLOTS);
         for (int i = 0; i < listings.size() && i < AuctionMenu.SLOTS.size(); i++) {
             Listing listing = listings.get(i);
             listingAtSlot.put(AuctionMenu.SLOTS.get(i), listing);
@@ -73,7 +70,7 @@ class MyListingsMenu implements Menu {
         ItemStack display = listing.item().clone();
         List<Component> lore = new ArrayList<>(display.lore() == null ? List.of() : display.lore());
         lore.add(Component.empty());
-        lore.add(text("auction.item.price", "price", gui.money(listing.price())));
+        lore.add(text("auction.item.price", "price", Money.format(listing.price())));
         lore.add(listing.expiresAt() > System.currentTimeMillis()
                 ? text("auction.item.time", "time", gui.timeLeft(viewer, listing))
                 : text("auction.item.expired"));

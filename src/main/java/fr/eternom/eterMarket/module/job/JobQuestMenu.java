@@ -1,5 +1,7 @@
 package fr.eternom.eterMarket.module.job;
 
+import fr.eternom.eterLib.helper.economy.Money;
+import fr.eternom.eterLib.helper.gui.Frame;
 import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
@@ -20,7 +22,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Quêtes du jour au PNJ du métier, 5 lignes :
@@ -40,7 +41,6 @@ class JobQuestMenu implements Menu {
     private static final int BONUS = 31;
     private static final int SHOP = 39;
     private static final int BACK = 40;
-    private static final Set<Integer> ACCENT_FRAME = Set.of(0, 1, 7, 8, 9, 17, 27, 35, 36, 37, 43, 44);
 
     private final JobGui gui;
     private final Messages messages;
@@ -97,13 +97,7 @@ class JobQuestMenu implements Menu {
     }
 
     private void render() {
-        ItemStack accent = Items.pane(Material.ORANGE_STAINED_GLASS_PANE);
-        ItemStack neutral = Items.pane(Material.GRAY_STAINED_GLASS_PANE);
-        for (int slot = 0; slot < inventory.getSize(); slot++) {
-            if (slot / 9 == 0 || slot / 9 == 4 || slot % 9 == 0 || slot % 9 == 8) {
-                inventory.setItem(slot, ACCENT_FRAME.contains(slot) ? accent : neutral);
-            }
-        }
+        Frame.draw(inventory, Material.ORANGE_STAINED_GLASS_PANE);
         List<Quest> daily = board.quests().stream().filter(quest -> quest.slot() < Jobs.BONUS_SLOT).toList();
         long done = daily.stream().filter(Quest::done).count();
         List<Component> head = new ArrayList<>();
@@ -141,7 +135,7 @@ class JobQuestMenu implements Menu {
             Component line = quest.done() ? texts.label(viewer, objective) : texts.objective(viewer, objective, QuestTexts.have(viewer, quest, objective));
             lore.add(text("quest.item.objective").append(line));
         }
-        lore.add(text("quest.item.reward", "reward", gui.money(quest.reward())));
+        lore.add(text("quest.item.reward", "reward", Money.format(quest.reward())));
         if (quest.done()) {
             lore.add(text("quest.item.done"));
         } else {
@@ -153,7 +147,7 @@ class JobQuestMenu implements Menu {
             lore.add(text(quest.tracked() ? "quest.item.untrack" : "quest.item.track"));
             if (board.canReroll()) {
                 lore.add(text("quest.item.reroll", "price", gui.service().jobs().rerollCost() > 0
-                        ? gui.money(gui.service().jobs().rerollCost()) : messages.plain(viewer, "quest.reroll.free")));
+                        ? Money.format(gui.service().jobs().rerollCost()) : messages.plain(viewer, "quest.reroll.free")));
             }
         }
         Material icon = quest.done() ? Material.LIME_DYE : quest.objectives().getFirst().icon();

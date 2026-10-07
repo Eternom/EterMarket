@@ -7,7 +7,7 @@ Document développeur, à tenir à jour avec le code.
 
 ## Prérequis
 
-- **EterLib 1.5.4+** (`depend`) : base, Redis, langues, menus, Dialogs, sidebar temporaire, étiquettes du Tab.
+- **EterLib 1.6.0+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes du Tab.
 - **EterTab** (facultatif) : affiche la quête suivie dans la sidebar (Paper) et le métier dans le Tab (`<tag_job>`, Velocity).
 - **Vault + EterEconomy** pour payer (sinon : « économie indisponible »).
 - Client 1.21.6+ pour les Dialogs (quantité, éditeur).
@@ -25,7 +25,7 @@ donc jamais de doublon après un redémarrage. Chaque Mannequin porte l'identifi
 l'entité) pour reconnaître un clic.
 
 **Synchronisation** : une définition modifiée sur un serveur (éditeur, création, suppression) est rechargée par les
-autres via Redis (canal `etermarket`, message `reload:<serveur>`, ignoré par l'émetteur). Sans Redis :
+autres via le bus réseau d'EterLib (canal `etermarket`, message `reload`, ignoré par l'émetteur). Sans Redis :
 `/market reload` sur chaque serveur.
 
 ## Boutiques (`module/shop`)
@@ -105,7 +105,7 @@ récupération). Chaque sortie d'une annonce passe par un `DELETE ... WHERE id =
   (`etermarket.auction.listings.<n>`, sinon `default-listings`) → frais de mise en vente (`listing-fee`, 1 Helok
   minimum) → annonce écrite. Au moindre refus, l'objet est rendu. Prix entre `min-price` et `max-price`.
 - **Acheter** (confirmation) : l'acheteur paie → l'annonce est réservée ; perdue = acheteur remboursé. Le vendeur
-  reçoit le prix moins `tax`, même hors ligne, et est prévenu où qu'il soit (Redis, canal `etermarket:auction`).
+  reçoit le prix moins `tax`, même hors ligne, et est prévenu où qu'il soit (`notify` du bus réseau, canal `etermarket`).
 - **Retirer** une annonce depuis « Mes ventes » ; les **expirées** (`duration-hours`) passent dans la boîte de leur
   vendeur (tâche chaque minute, sur chaque serveur, sans doublon grâce au `DELETE`).
 - **Boîte de récupération** : invendus, annonces retirées, achats sans place. Un colis ne se prend que s'il rentre.
