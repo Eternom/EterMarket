@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 /**
  * Gestion des PNJ par le staff : créer une définition, la placer ici, retirer un emplacement, modifier nom, skin et
  * vente sur stock, supprimer. Une définition modifiée sur un serveur est rechargée par les autres (bus réseau
- * d'EterMarket, message "reload") ; sans Redis, /market reload sur chaque serveur.
+ * d'EterMarket, message "reload").
  */
 public class NpcService {
 
@@ -62,13 +62,22 @@ public class NpcService {
         }, "PNJ d'EterMarket illisibles");
     }
 
-    /** @param job métier dont ce PNJ est la référence (rôle JOB), null pour une boutique */
-    public void create(Player admin, String id, Role role, String job) {
+    /**
+     * @param job        métier dont ce PNJ est la référence (rôle JOB), null pour une boutique
+     * @param alsoCreate en tâche de fond, une fois le PNJ créé (ex : la boutique de départ d'un PNJ de métier)
+     */
+    public void create(Player admin, String id, Role role, String job, Runnable alsoCreate) {
         if (!ID.matcher(id).matches()) {
             messages.send(admin, "npc.invalid-id");
             return;
         }
-        Tasks.async(plugin, admin, () -> repository.create(id, role, job), created -> {
+        Tasks.async(plugin, admin, () -> {
+            boolean created = repository.create(id, role, job);
+            if (created) {
+                alsoCreate.run();
+            }
+            return created;
+        }, created -> {
             if (!created) {
                 messages.send(admin, "npc.exists", "npc", id);
                 return;
@@ -137,9 +146,7 @@ public class NpcService {
 
     /** Prévient les autres serveurs qu'une définition a changé. */
     private void changed() {
-        if (bus.isNetworked()) {
-            bus.publish(RELOAD, new JsonObject(),
-                    () -> plugin.getLogger().warning("Redis injoignable : les autres serveurs verront ce PNJ après /market reload"));
-        }
+        bus.publish(RELOAD, new JsonObject(),
+                () -> plugin.getLogger().warning("Redis injoignable : les autres serveurs verront ce PNJ après /market reload"));
     }
 }

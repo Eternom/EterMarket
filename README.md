@@ -7,7 +7,7 @@ Document développeur, à tenir à jour avec le code.
 
 ## Prérequis
 
-- **EterLib 1.7.0+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes de la sidebar.
+- **EterLib 1.8.0+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes de la sidebar.
 - **EterTab** (facultatif) : affiche la quête suivie et le métier (`<tag_job>`) dans la sidebar.
 - **Vault + EterEconomy** pour payer (sinon : « économie indisponible »).
 - Client 1.21.6+ pour les Dialogs (quantité, éditeur).
@@ -30,7 +30,7 @@ donc jamais de doublon après un redémarrage. Chaque Mannequin porte l'identifi
 l'entité) pour reconnaître un clic.
 
 **Synchronisation** : une définition modifiée sur un serveur (éditeur, création, suppression) est rechargée par les
-autres via le bus réseau d'EterLib (canal `etermarket`, message `reload`, ignoré par l'émetteur). Sans Redis :
+autres via le bus réseau d'EterLib (canal `etermarket`, message `reload`, ignoré par l'émetteur). Redis en panne :
 `/market reload` sur chaque serveur.
 
 ## Boutiques (`module/shop`)
@@ -89,19 +89,15 @@ enchantement) → objets retirés → la base marque la quête faite **une seule
 progress >= cible`) → objets versés dans le **stock commun** → récompense par Vault. Refus (double clic, autre
 serveur) : objets rendus.
 
-**Le PNJ de métier** ouvre la guilde (rejoindre) ou les quêtes du jour ; un onglet mène à sa **boutique** (objets utiles
-au métier, même éditeur que les boutiques). **Répertoire de départ** (`Jobs#defaults`, 17 quêtes par métier, chacune avec plusieurs
+**Le PNJ de métier** ouvre la guilde (rejoindre) ou les quêtes du jour ; un onglet mène à sa **boutique** (outils et objets utiles
+au métier, `Jobs#shop`, posée à la création du PNJ ; même éditeur que les boutiques). **Répertoire de départ** (`Jobs#defaults`, 17 quêtes par métier, chacune avec plusieurs
 choses à faire) posé **une seule fois par métier** sur tout le réseau : le serveur qui inscrit le métier dans
 `etermarket_job_seeded` (`INSERT IGNORE`) est le seul à le poser, même si plusieurs démarrent ensemble ; un métier vidé
-exprès le reste. `/market jobs reset <métier> confirm` y revient. Repères : facile 110-140, normale 170-210,
+exprès le reste. **Les quêtes se règlent dans le code** (`Jobs#defaults`), pas en jeu : `/market jobs reset <métier> confirm`
+remet les quêtes ET la boutique de départ des PNJ du métier. Repères : facile 110-140, normale 170-210,
 difficile 270-320 ; une journée complète ≈ 850.
 
-**Éditeur du répertoire** (Maj + clic droit sur le PNJ, bouton « Répertoire des quêtes ») : nouvelle quête de
-livraison (objet en main) ou d'action (Dialog : action, cible, quantité, niveau, récompense) ; clic gauche = niveau,
-récompense et quantités (0 retire un objectif) ; Maj + clic = ajouter l'objet en main à la quête ; clic droit = retirer.
-
-**Contrôle d'arbitrage** : le répertoire affiche en rouge une quête dont **tous** les objets s'achètent en boutique pour
-moins que sa récompense ; l'éditeur de boutique, un objet vendu moins cher à l'unité que sa part de récompense (la
+**Contrôle d'arbitrage** : l'éditeur de boutique signale un objet vendu moins cher à l'unité que sa part de récompense (la
 récompense partagée entre les objets demandés). Repères : « Repères économiques » d'EterEconomy.
 
 ## Hôtel des ventes (`module/auction`)

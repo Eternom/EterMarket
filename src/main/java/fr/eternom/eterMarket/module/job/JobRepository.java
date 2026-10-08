@@ -188,15 +188,6 @@ public class JobRepository {
         database.insert(TEMPLATES, Map.of("job", job, "tier", tier.id(), "objectives", Objective.format(objectives), "reward", reward));
     }
 
-    public void updateTemplate(long id, Tier tier, List<Objective> objectives, double reward) {
-        database.update(TEMPLATES, Map.of("tier", tier.id(), "objectives", Objective.format(objectives), "reward", reward),
-                Map.of("id", id));
-    }
-
-    public void removeTemplate(long id) {
-        database.delete(TEMPLATES, Map.of("id", id));
-    }
-
     /**
      * Répertoire de départ, posé UNE seule fois par métier sur tout le réseau : le serveur qui inscrit le métier dans
      * job_seeded (INSERT IGNORE, atomique) est le seul à le poser, même si plusieurs serveurs démarrent ensemble. Un

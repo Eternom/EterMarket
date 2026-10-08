@@ -70,9 +70,6 @@ editor:
     lore: "<info>Oui : la boutique ne vend que le stock commun (rempli par les quêtes)"
     enabled: "<info>La boutique vend maintenant <accent>sur stock</accent>."
     disabled: "<info>La boutique vend maintenant en <accent>quantité illimitée</accent>."
-  catalog:
-    button: "<accent>Répertoire des quêtes"
-    lore: "<info>Les quêtes possibles de ce métier"
   item:
     arbitrage: "<error>⚠ Vendu <price>/unité, pas plus cher qu'une quête (<reward>/unité) : on achète pour livrer !"
     stock: "<dark_gray>▸ <info>Stock commun : <accent><amount>"
@@ -205,49 +202,9 @@ quest:
   reroll-old: "<error>Ces quêtes sont d'hier : rouvre le menu."
 
 catalog:
-  title: "<dark_red>Quêtes : <job>"
-  info: "<accent><job>"
-  info-count: "<dark_gray>▸ <info>Quêtes possibles : <accent><count>"
-  info-tier: "<dark_gray>▸ <accent><count></accent> <info>"
-  info-page: "<dark_gray>▸ <info>Page <accent><page></accent><dark_gray>/</dark_gray><accent><pages>"
-  add: "<success>Nouvelle quête de livraison"
-  add-lore: "<info>L'objet en main, la quantité tenue"
-  add-action: "<success>Nouvelle quête d'action"
-  add-action-lore: "<info>Tuer, casser ou pêcher"
-  back: "<accent>« Éditeur de la boutique"
-  previous: "<accent>« Page précédente"
-  next: "<accent>Page suivante »"
-  invalid: "<error>Niveau, quantité ou récompense invalide."
-  objective-added: "<info>Objet ajouté à la quête."
-  reset-usage: '<error>Utilisation : <accent>/market jobs reset \<métier> confirm</accent> (<jobs>) : remplace TOUT le répertoire du métier par celui de départ.'
-  reset: "<info>Répertoire des quêtes de <accent><job></accent> remis à celui de départ."
-  reset-none: "<error>Pas de répertoire de départ pour <accent><job></accent> : remplis-le dans l'éditeur."
-  item:
-    tier: "<dark_gray>▸ <info>Niveau : "
-    amount: "<dark_gray>× <accent><amount>"
-    reward: "<dark_gray>▸ <info>Récompense : <accent><reward>"
-    arbitrage: "<error>⚠ Tout s'achète en boutique pour <price> : on achète pour livrer !"
-    edit: "<accent>Clic gauche <dark_gray>· <info>niveau, récompense, quantités"
-    add-objective: "<accent>Maj + clic <dark_gray>· <info>ajouter l'objet en main"
-    remove: "<accent>Clic droit <dark_gray>· <info>retirer"
-  edit:
-    title: "<primary>Quête"
-    body: "Niveau, récompense en Heloks (repères : facile 110-140, normale 170-210, difficile 270-320) et quantité de chaque objectif (0 = le retirer)."
-    tier: "Niveau"
-    amount: "Quantité"
-    reward: "Récompense"
-  action:
-    title: "<primary>Quête d'action"
-    body: "Cible : une créature (zombie, creeper…) pour tuer, un bloc (stone, oak_log, wheat…) pour casser, un objet (cod…) pour pêcher. Vide = n'importe quel monstre ou prise. Les créatures de spawner, les blocs posés et les cultures pas mûres ne comptent pas."
-    kind: "Action"
-    kill: "Tuer"
-    break: "Casser"
-    fish: "Pêcher"
-    target: "Cible (nom anglais)"
-    invalid: "<error>Cible, quantité, niveau ou récompense invalide."
-  remove:
-    title: "<primary>Retirer la quête"
-    body: "Retirer cette quête du répertoire ? Les quêtes déjà tirées aujourd'hui restent."
+  reset-usage: '<error>Utilisation : <accent>/market jobs reset \<métier> confirm</accent> (<jobs>) : remet les quêtes ET la boutique de départ du métier (changements de la boutique perdus).'
+  reset: "<info>Quêtes et boutique de <accent><job></accent> remises à celles de départ."
+  reset-none: "<error>Pas de quêtes de départ pour <accent><job></accent> (métier ajouté dans la config) : à ajouter dans le code d'EterMarket."
 
 auction:
   hold-item: "<error>Tiens en main l'objet à vendre."

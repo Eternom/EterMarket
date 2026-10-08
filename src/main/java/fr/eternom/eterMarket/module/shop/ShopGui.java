@@ -50,9 +50,8 @@ public class ShopGui {
     private final Messages messages;
     private final BackButton backButton;
     private final JobRepository jobs;
-    /** Quêtes et éditeur du répertoire d'un PNJ de métier : branchés par JobGui, qui vit dans un autre module. */
+    /** Quêtes d'un PNJ de métier : branchées par JobGui, qui vit dans un autre module. */
     private BiConsumer<Player, Npc> questsOpener = (player, npc) -> { };
-    private BiConsumer<Player, Npc> catalogOpener = (player, npc) -> { };
 
     public ShopGui(JavaPlugin plugin, ShopRepository shops, StockRepository stock, ShopService service, NpcService npcs,
                    JobRepository jobs, Messages messages, BackButton backButton) {
@@ -97,17 +96,12 @@ public class ShopGui {
         }, then, () -> messages.send(player, "error.generic"));
     }
 
-    public void linkJobs(BiConsumer<Player, Npc> questsOpener, BiConsumer<Player, Npc> catalogOpener) {
+    public void linkJobs(BiConsumer<Player, Npc> questsOpener) {
         this.questsOpener = questsOpener;
-        this.catalogOpener = catalogOpener;
     }
 
     void openQuests(Player player, Npc npc) {
         questsOpener.accept(player, npc);
-    }
-
-    void openCatalog(Player player, Npc npc) {
-        catalogOpener.accept(player, npc);
     }
 
     // ---------- Joueurs ----------

@@ -11,6 +11,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.stream.Stream;
 /**
  * /market (staff, etermarket.admin) :
  * create <pnj> [job <métier> | auction] · place <pnj> · remove (le plus proche) · edit <pnj> · delete <pnj> confirm · list · reload
- * · jobs reset <métier> confirm (remet le répertoire de quêtes de départ du métier).
+ * · jobs reset <métier> confirm (remet les quêtes et la boutique de départ du métier).
  */
 public class MarketCommand implements TabExecutor {
 
@@ -91,25 +92,44 @@ public class MarketCommand implements TabExecutor {
         return true;
     }
 
-    /** jobs reset <métier> confirm : efface le répertoire du métier et remet celui de départ. */
+    /**
+     * jobs reset <métier> confirm : remet les quêtes de départ du métier, et la boutique de départ de ses PNJ (leurs
+     * changements faits dans l'éditeur sont perdus).
+     */
     private void resetJob(CommandSender sender, String[] args) {
         String job = args.length > 2 ? args[2].toLowerCase(Locale.ROOT) : "";
         if (args.length < 4 || !args[1].equalsIgnoreCase("reset") || !args[3].equalsIgnoreCase("confirm") || !jobs.exists(job)) {
             messages.send(sender, "catalog.reset-usage", "jobs", String.join(", ", jobs.icons().keySet()));
             return;
         }
-        Tasks.async(plugin, () -> messages.send(sender, jobService.resetCatalog(job) ? "catalog.reset" : "catalog.reset-none",
-                "job", job), "Répertoire de quêtes non remis à zéro");
+        List<String> jobNpcs = npcs.spawner().ids().stream()
+                .filter(npcId -> npcs.spawner().npc(npcId).filter(npc -> npc.role() == Role.JOB && job.equals(npc.job())).isPresent())
+                .toList();
+        Tasks.async(plugin, () -> {
+            boolean reset = jobService.resetCatalog(job);
+            jobNpcs.forEach(npcId -> fillJobShop(npcId, job));
+            messages.send(sender, reset ? "catalog.reset" : "catalog.reset-none", "job", job);
+        }, "Métier non remis à zéro");
+    }
+
+    /** Bloquant : la boutique du PNJ npcId devient celle de départ du métier (rien si le métier n'en a pas). */
+    private void fillJobShop(String npcId, String job) {
+        List<Jobs.ShopOffer> offers = Jobs.shop(job);
+        if (offers.isEmpty()) {
+            return;
+        }
+        shopRepository.removeAll(npcId);
+        offers.forEach(offer -> shopRepository.add(npcId, ItemStack.of(offer.material(), offer.amount()), offer.price()));
     }
 
     /** create <pnj> : boutique ; create <pnj> job <métier> : PNJ d'un métier ; create <pnj> auction : hôtel des ventes. */
     private void create(Player player, String id, String[] args) {
         if (args.length < 3) {
-            npcs.create(player, id, Role.SHOP, null);
+            npcs.create(player, id, Role.SHOP, null, () -> { });
             return;
         }
         if (args[2].equalsIgnoreCase("auction")) {
-            npcs.create(player, id, Role.AUCTION, null);
+            npcs.create(player, id, Role.AUCTION, null, () -> { });
             return;
         }
         String job = args.length > 3 ? args[3].toLowerCase(Locale.ROOT) : "";
@@ -117,7 +137,7 @@ public class MarketCommand implements TabExecutor {
             messages.send(player, "npc.create-usage", "jobs", String.join(", ", jobs.icons().keySet()));
             return;
         }
-        npcs.create(player, id, Role.JOB, job);
+        npcs.create(player, id, Role.JOB, job, () -> fillJobShop(id, job));
     }
 
     @Override

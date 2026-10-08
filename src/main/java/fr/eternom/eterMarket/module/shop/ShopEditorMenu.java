@@ -6,7 +6,6 @@ import fr.eternom.eterLib.helper.gui.Items;
 import fr.eternom.eterLib.helper.gui.Menu;
 import fr.eternom.eterLib.helper.gui.Sounds;
 import fr.eternom.eterLib.helper.message.Messages;
-import fr.eternom.eterMarket.module.npc.NpcRepository.Role;
 import fr.eternom.eterMarket.module.shop.ShopGui.View;
 import fr.eternom.eterMarket.module.shop.ShopRepository.ShopItem;
 import net.kyori.adventure.text.Component;
@@ -31,10 +30,10 @@ import java.util.Map;
  *  ▢ · · · · · · · ▢
  *  ▢ · · · · · · · ▢
  *  ▣ · · · · · · · ▣
- *  ◀ + ⇄ ✎ « ☺ ☰ ▣ ▶     + = ajouter l'objet en main · ⇄ = vente sur stock · ✎ = nom · ☺ = skin
- *                        ☰ = répertoire des quêtes (PNJ de métier)
+ *  ◀ + ⇄ ✎ « ☺ ▣ ▣ ▶     + = ajouter l'objet en main · ⇄ = vente sur stock · ✎ = nom · ☺ = skin
  * </pre>
- * Le stock commun est affiché pour chaque objet simple, même quand la boutique vend en quantité illimitée.
+ * Le stock commun est affiché pour chaque objet simple, même quand la boutique vend en quantité illimitée. Un objet
+ * vendu à l'unité moins cher que ce qu'il rapporte dans une quête est signalé (arbitrage : acheter, livrer, gagner).
  */
 class ShopEditorMenu implements Menu {
 
@@ -44,7 +43,6 @@ class ShopEditorMenu implements Menu {
     private static final int RENAME = 48;
     private static final int BACK = 49;
     private static final int SKIN = 50;
-    private static final int CATALOG = 51;
     private static final int PREVIOUS = 45;
     private static final int NEXT = 53;
 
@@ -95,12 +93,6 @@ class ShopEditorMenu implements Menu {
                 Sounds.click(player);
                 gui.changeSkin(player, view, page);
             }
-            case CATALOG -> {
-                if (view.npc().role() == Role.JOB) {
-                    Sounds.page(player);
-                    gui.openCatalog(player, view.npc());
-                }
-            }
             case BACK -> gui.backButton().click(player);
             case PREVIOUS -> {
                 if (page > 0) {
@@ -144,9 +136,6 @@ class ShopEditorMenu implements Menu {
                 text(useStock ? "editor.stock.button-on" : "editor.stock.button-off"), List.of(text("editor.stock.lore")), useStock));
         inventory.setItem(RENAME, Items.item(Material.NAME_TAG, text("editor.rename.button"), List.of(text("editor.rename.lore"))));
         inventory.setItem(SKIN, Items.item(Material.ARMOR_STAND, text("editor.skin.button"), List.of(text("editor.skin.lore"))));
-        if (view.npc().role() == Role.JOB) {
-            inventory.setItem(CATALOG, Items.item(Material.WRITABLE_BOOK, text("editor.catalog.button"), List.of(text("editor.catalog.lore"))));
-        }
         inventory.setItem(BACK, gui.backButton().item(viewer));
     }
 

@@ -39,7 +39,7 @@ class QuestTexts {
                 "amount", String.valueOf(objective.amount())));
     }
 
-    /** L'objectif sans progression (« Tuer Zombie »), pour l'éditeur. */
+    /** L'objectif sans progression (« Tuer Zombie »), pour une quête déjà faite. */
     Component label(Player viewer, Objective objective) {
         return line(viewer, objective, Component.empty());
     }

@@ -70,9 +70,6 @@ editor:
     lore: "<info>Yes: the shop only sells the shared stock (filled by quests)"
     enabled: "<info>The shop now sells <accent>from stock</accent>."
     disabled: "<info>The shop now sells <accent>unlimited</accent> quantities."
-  catalog:
-    button: "<accent>Quest catalog"
-    lore: "<info>The possible quests of this job"
   item:
     arbitrage: "<error>⚠ Sold <price>/unit, not more than a quest pays (<reward>/unit): people will buy to deliver!"
     stock: "<dark_gray>▸ <info>Shared stock: <accent><amount>"
@@ -205,49 +202,9 @@ quest:
   reroll-old: "<error>These quests are from yesterday: reopen the menu."
 
 catalog:
-  title: "<dark_red>Quests: <job>"
-  info: "<accent><job>"
-  info-count: "<dark_gray>▸ <info>Possible quests: <accent><count>"
-  info-tier: "<dark_gray>▸ <accent><count></accent> <info>"
-  info-page: "<dark_gray>▸ <info>Page <accent><page></accent><dark_gray>/</dark_gray><accent><pages>"
-  add: "<success>New delivery quest"
-  add-lore: "<info>The held item, the held amount"
-  add-action: "<success>New action quest"
-  add-action-lore: "<info>Kill, break or fish"
-  back: "<accent>« Shop editor"
-  previous: "<accent>« Previous page"
-  next: "<accent>Next page »"
-  invalid: "<error>Invalid level, amount or reward."
-  objective-added: "<info>Item added to the quest."
-  reset-usage: '<error>Usage: <accent>/market jobs reset \<job> confirm</accent> (<jobs>): replaces the WHOLE job catalog with the starting one.'
-  reset: "<info>Quest catalog of <accent><job></accent> reset to the starting one."
-  reset-none: "<error>No starting catalog for <accent><job></accent>: fill it in the editor."
-  item:
-    tier: "<dark_gray>▸ <info>Level: "
-    amount: "<dark_gray>× <accent><amount>"
-    reward: "<dark_gray>▸ <info>Reward: <accent><reward>"
-    arbitrage: "<error>⚠ Everything can be bought in a shop for <price>: people will buy to deliver!"
-    edit: "<accent>Left click <dark_gray>· <info>level, reward, amounts"
-    add-objective: "<accent>Shift + click <dark_gray>· <info>add the held item"
-    remove: "<accent>Right click <dark_gray>· <info>remove"
-  edit:
-    title: "<primary>Quest"
-    body: "Level, reward in Heloks (guide: easy 110-140, normal 170-210, hard 270-320) and the amount of each objective (0 = remove it)."
-    tier: "Level"
-    amount: "Amount"
-    reward: "Reward"
-  action:
-    title: "<primary>Action quest"
-    body: "Target: a creature (zombie, creeper…) to kill, a block (stone, oak_log, wheat…) to break, an item (cod…) to fish. Empty = any monster or catch. Spawner creatures, placed blocks and unripe crops do not count."
-    kind: "Action"
-    kill: "Kill"
-    break: "Break"
-    fish: "Fish"
-    target: "Target (English name)"
-    invalid: "<error>Invalid target, amount, level or reward."
-  remove:
-    title: "<primary>Remove the quest"
-    body: "Remove this quest from the catalog? Quests already drawn today stay."
+  reset-usage: '<error>Usage: <accent>/market jobs reset \<job> confirm</accent> (<jobs>): resets the starting quests AND shop of the job (shop changes are lost).'
+  reset: "<info>Quests and shop of <accent><job></accent> reset to the starting ones."
+  reset-none: "<error>No starting quests for <accent><job></accent> (job added in the config): add them in the EterMarket code."
 
 auction:
   hold-item: "<error>Hold the item to sell."

@@ -34,7 +34,7 @@ import java.time.ZoneId;
 public final class Main extends JavaPlugin {
 
     /** Version minimale d'EterLib : étiquettes du joueur (getPlayerTags) depuis 1.7.0. */
-    private static final String REQUIRED_ETERLIB = "1.7.0";
+    private static final String REQUIRED_ETERLIB = "1.8.0";
 
     /** Préfixe des tables d'EterMarket dans la base commune : etermarket_npcs, etermarket_stock... */
     private static final String TABLE_PREFIX = "etermarket_";
@@ -82,11 +82,11 @@ public final class Main extends JavaPlugin {
         shops = new ShopGui(this, shopRepository, stock, new ShopService(this, stock, messages), npcs, jobRepository, messages,
                 lib.backButton(getConfig().getString("menus.shop.back-command", "")));
         jobService = new JobService(this, jobRepository, stock, jobs, messages, zone());
-        jobGui = new JobGui(this, jobService, jobRepository, shopRepository, messages,
+        jobGui = new JobGui(this, jobService, jobRepository, messages,
                 lib.backButton(getConfig().getString("menus.jobs.back-command", "")));
-        // Boutiques et guilde se renvoient l'une à l'autre (onglets Quêtes / Boutique, éditeurs)
-        shops.linkJobs(jobGui::open, jobGui::openCatalog);
-        jobGui.linkShops((player, npc) -> shops.open(player, npc.id(), 0), (player, npc) -> shops.openEditor(player, npc.id(), 0));
+        // Boutiques et guilde se renvoient l'une à l'autre (onglets Quêtes / Boutique)
+        shops.linkJobs(jobGui::open);
+        jobGui.linkShops((player, npc) -> shops.open(player, npc.id(), 0));
         Tasks.async(this, jobService::seedCatalogs, "Répertoire de quêtes de départ non posé");
 
         AuctionRepository auctionRepository = new AuctionRepository(database);

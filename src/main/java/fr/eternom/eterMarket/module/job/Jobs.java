@@ -182,6 +182,64 @@ public record Jobs(Map<String, Material> icons, double changeCost, Duration chan
         });
     }
 
+    /** Un objet de la boutique de départ d'un métier : amount objets (un lot) pour price Heloks. */
+    public record ShopOffer(Material material, int amount, double price) {
+    }
+
+    /**
+     * Boutique de départ du PNJ d'un métier : ses outils et ce qui lui sert au quotidien (un évier d'argent, les boutiques
+     * ne rachètent rien). Règle d'or des repères économiques : jamais moins cher à l'unité que ce qu'un objet rapporte
+     * livré en quête. Posée à la création du PNJ ; /market jobs reset <métier> confirm la remet. Modifiable ensuite
+     * dans l'éditeur de la boutique.
+     */
+    public static List<ShopOffer> shop(String job) {
+        return switch (job) {
+            case "mineur" -> List.of(
+                    offer(Material.IRON_PICKAXE, 1, 250),
+                    offer(Material.DIAMOND_PICKAXE, 1, 1800),
+                    offer(Material.IRON_SHOVEL, 1, 150),
+                    offer(Material.TORCH, 32, 96),
+                    offer(Material.LADDER, 16, 64),
+                    offer(Material.BUCKET, 1, 150),
+                    offer(Material.COOKED_BEEF, 16, 96));
+            case "bucheron" -> List.of(
+                    offer(Material.IRON_AXE, 1, 250),
+                    offer(Material.DIAMOND_AXE, 1, 1800),
+                    offer(Material.SHEARS, 1, 120),
+                    offer(Material.OAK_SAPLING, 16, 64),
+                    offer(Material.SPRUCE_SAPLING, 16, 64),
+                    offer(Material.BONE_MEAL, 32, 128),
+                    offer(Material.COOKED_BEEF, 16, 96));
+            case "fermier" -> List.of(
+                    offer(Material.IRON_HOE, 1, 200),
+                    offer(Material.WHEAT_SEEDS, 32, 64),
+                    offer(Material.BEETROOT_SEEDS, 16, 64),
+                    offer(Material.MELON_SEEDS, 4, 80),
+                    offer(Material.PUMPKIN_SEEDS, 4, 80),
+                    offer(Material.BONE_MEAL, 32, 128),
+                    offer(Material.COMPOSTER, 1, 60),
+                    offer(Material.WATER_BUCKET, 1, 200));
+            case "chasseur" -> List.of(
+                    offer(Material.IRON_SWORD, 1, 250),
+                    offer(Material.BOW, 1, 300),
+                    offer(Material.ARROW, 32, 128),
+                    offer(Material.SHIELD, 1, 200),
+                    offer(Material.IRON_CHESTPLATE, 1, 600),
+                    offer(Material.COOKED_BEEF, 16, 96));
+            case "pecheur" -> List.of(
+                    offer(Material.FISHING_ROD, 1, 150),
+                    offer(Material.OAK_BOAT, 1, 80),
+                    offer(Material.BUCKET, 1, 150),
+                    offer(Material.LANTERN, 4, 80),
+                    offer(Material.COOKED_BEEF, 16, 96));
+            default -> List.of();
+        };
+    }
+
+    private static ShopOffer offer(Material material, int amount, double price) {
+        return new ShopOffer(material, amount, price);
+    }
+
     private static Template t(Tier tier, double reward, Objective... objectives) {
         return new Template(0, null, tier, List.of(objectives), reward);
     }
