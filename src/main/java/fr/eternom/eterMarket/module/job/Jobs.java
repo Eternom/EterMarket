@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 /**
  * Réglages de la guilde (config.yml > jobs) : les métiers (identifiant -> icône ; le nom affiché est dans lang/ >
  * job.name.<métier>), le coût et le délai d'un changement de métier, les niveaux des quêtes du jour, la quête bonus et
- * le changement de quête. Contient aussi le répertoire de départ de chaque métier, posé en base au premier démarrage.
+ * le changement de quête. Contient aussi le répertoire de départ de chaque métier, posé en base une seule fois par métier.
  */
 public record Jobs(Map<String, Material> icons, double changeCost, Duration changeCooldown, List<Tier> daily,
                    boolean bonusQuest, Tier bonusTier, double bonusMultiplier, double rerollCost) {
@@ -76,103 +76,108 @@ public record Jobs(Map<String, Material> icons, double changeCost, Duration chan
     }
 
     /**
-     * Répertoire de départ, calé sur les repères économiques (README d'EterEconomy) : facile ~100-130 Heloks
-     * (5 à 10 min), normale ~160-200 (15 min), difficile ~250-300 (25-30 min). Une journée complète (facile, normale,
-     * difficile, puis la bonus normale x 1,3) rapporte environ 800. Des objets transformés (cuits, fabriqués) et des
-     * commandes à plusieurs objets pour varier ; des actions (tuer, casser, pêcher) qu'on ne peut pas acheter.
-     * À ajuster dans l'éditeur en jeu ; /market jobs reset <métier> revient à cette liste.
+     * Répertoire de départ, calé sur les repères économiques (README d'EterEconomy) : facile ~110-140 Heloks
+     * (10 min), normale ~170-210 (15-20 min), difficile ~270-320 (30 min). Une journée complète (facile, normale,
+     * difficile, puis la bonus normale x 1,3) rapporte environ 850. Chaque quête mélange plusieurs choses : des actions
+     * (tuer, casser, pêcher : jusqu'à 3, qu'on ne peut pas acheter) et des objets à livrer, souvent transformés.
+     * À ajuster dans l'éditeur en jeu ; /market jobs reset <métier> confirm revient à cette liste.
      */
     public static Optional<List<Template>> defaults(String job) {
         return Optional.ofNullable(switch (job) {
             case "mineur" -> List.of(
-                    t(Tier.EASY, 110, item(Material.COAL, 32)),
-                    t(Tier.EASY, 110, item(Material.COPPER_INGOT, 32)),
-                    t(Tier.EASY, 110, item(Material.REDSTONE, 32)),
-                    t(Tier.EASY, 110, item(Material.LAPIS_LAZULI, 24)),
-                    t(Tier.EASY, 120, brk(Material.STONE, 192)),
-                    t(Tier.NORMAL, 180, item(Material.IRON_INGOT, 24)),
-                    t(Tier.NORMAL, 180, item(Material.GOLD_INGOT, 12)),
-                    t(Tier.NORMAL, 170, item(Material.QUARTZ, 48)),
-                    t(Tier.NORMAL, 170, item(Material.AMETHYST_SHARD, 24)),
-                    t(Tier.NORMAL, 170, item(Material.SMOOTH_STONE, 64)),
-                    t(Tier.NORMAL, 180, brk(Material.DEEPSLATE, 256)),
-                    t(Tier.NORMAL, 190, item(Material.IRON_INGOT, 8), item(Material.GOLD_INGOT, 4), item(Material.COAL, 16)),
-                    t(Tier.HARD, 280, item(Material.DIAMOND, 4)),
-                    t(Tier.HARD, 280, item(Material.EMERALD, 6)),
-                    t(Tier.HARD, 260, item(Material.OBSIDIAN, 16)),
-                    t(Tier.HARD, 300, item(Material.ANCIENT_DEBRIS, 1)),
-                    t(Tier.HARD, 290, item(Material.IRON_BLOCK, 2), item(Material.GOLD_BLOCK, 1), item(Material.REDSTONE_BLOCK, 4)),
-                    t(Tier.HARD, 290, item(Material.DIAMOND, 2), item(Material.OBSIDIAN, 8)));
+                    t(Tier.EASY, 120, brk(Material.STONE, 128), item(Material.COAL, 16)),
+                    t(Tier.EASY, 120, brk(Material.COAL_ORE, 16), item(Material.TORCH, 32)),
+                    t(Tier.EASY, 130, brk(Material.COPPER_ORE, 12), item(Material.COPPER_INGOT, 24)),
+                    t(Tier.EASY, 130, brk(Material.DIORITE, 32), brk(Material.ANDESITE, 32), brk(Material.GRANITE, 32)),
+                    t(Tier.EASY, 140, brk(Material.STONE, 96), item(Material.FURNACE, 4), item(Material.STONE_BRICKS, 32)),
+                    t(Tier.NORMAL, 190, brk(Material.IRON_ORE, 16), item(Material.IRON_INGOT, 16)),
+                    t(Tier.NORMAL, 190, brk(Material.DEEPSLATE, 192), brk(Material.TUFF, 32), item(Material.POLISHED_DEEPSLATE, 32)),
+                    t(Tier.NORMAL, 200, brk(Material.REDSTONE_ORE, 6), brk(Material.LAPIS_ORE, 4), item(Material.REDSTONE, 32),
+                            item(Material.LAPIS_LAZULI, 16)),
+                    t(Tier.NORMAL, 200, brk(Material.GOLD_ORE, 8), item(Material.GOLD_INGOT, 8), item(Material.RAIL, 32)),
+                    t(Tier.NORMAL, 190, brk(Material.NETHERRACK, 128), brk(Material.NETHER_QUARTZ_ORE, 12), item(Material.QUARTZ, 32)),
+                    t(Tier.NORMAL, 210, brk(Material.AMETHYST_CLUSTER, 8), item(Material.AMETHYST_SHARD, 24), item(Material.CALCITE, 16)),
+                    t(Tier.HARD, 300, brk(Material.DEEPSLATE_DIAMOND_ORE, 4), item(Material.DIAMOND, 6), item(Material.IRON_BLOCK, 2)),
+                    t(Tier.HARD, 290, brk(Material.DEEPSLATE_IRON_ORE, 24), brk(Material.DEEPSLATE_GOLD_ORE, 8),
+                            brk(Material.DEEPSLATE_REDSTONE_ORE, 8), item(Material.IRON_INGOT, 16)),
+                    t(Tier.HARD, 300, brk(Material.OBSIDIAN, 12), item(Material.OBSIDIAN, 12), item(Material.DIAMOND, 2)),
+                    t(Tier.HARD, 320, brk(Material.ANCIENT_DEBRIS, 2), brk(Material.BASALT, 64), item(Material.NETHERITE_SCRAP, 2)),
+                    t(Tier.HARD, 290, brk(Material.EMERALD_ORE, 2), item(Material.EMERALD, 4), item(Material.GOLD_BLOCK, 2)),
+                    t(Tier.HARD, 280, brk(Material.BLACKSTONE, 96), brk(Material.NETHER_GOLD_ORE, 16), item(Material.GOLD_INGOT, 8)));
             case "bucheron" -> List.of(
-                    t(Tier.EASY, 110, item(Material.OAK_LOG, 48)),
-                    t(Tier.EASY, 110, item(Material.BIRCH_LOG, 48)),
-                    t(Tier.EASY, 110, item(Material.SPRUCE_LOG, 48)),
-                    t(Tier.EASY, 120, item(Material.CHARCOAL, 32)),
-                    t(Tier.EASY, 120, brk(Material.OAK_LOG, 64)),
-                    t(Tier.NORMAL, 170, item(Material.JUNGLE_LOG, 48)),
-                    t(Tier.NORMAL, 170, item(Material.ACACIA_LOG, 48)),
-                    t(Tier.NORMAL, 170, item(Material.DARK_OAK_LOG, 48)),
-                    t(Tier.NORMAL, 190, item(Material.APPLE, 6)),
-                    t(Tier.NORMAL, 170, brk(Material.SPRUCE_LOG, 96)),
-                    t(Tier.NORMAL, 190, item(Material.OAK_PLANKS, 64), item(Material.STICK, 32), item(Material.CHARCOAL, 16)),
-                    t(Tier.HARD, 260, item(Material.CHERRY_LOG, 64)),
-                    t(Tier.HARD, 260, item(Material.MANGROVE_LOG, 64)),
-                    t(Tier.HARD, 280, item(Material.PALE_OAK_LOG, 48)),
-                    t(Tier.HARD, 260, brk(Material.JUNGLE_LOG, 128)),
-                    t(Tier.HARD, 290, item(Material.DARK_OAK_LOG, 32), item(Material.JUNGLE_LOG, 32), item(Material.ACACIA_LOG, 32)));
+                    t(Tier.EASY, 120, brk(Material.OAK_LOG, 48), item(Material.OAK_PLANKS, 64)),
+                    t(Tier.EASY, 120, brk(Material.BIRCH_LOG, 48), item(Material.BIRCH_LOG, 16)),
+                    t(Tier.EASY, 130, brk(Material.SPRUCE_LOG, 48), item(Material.CHARCOAL, 16)),
+                    t(Tier.EASY, 130, brk(Material.OAK_LOG, 32), item(Material.STICK, 64), item(Material.CRAFTING_TABLE, 4)),
+                    t(Tier.EASY, 140, brk(Material.OAK_LEAVES, 64), item(Material.APPLE, 2), item(Material.OAK_SAPLING, 16)),
+                    t(Tier.NORMAL, 190, brk(Material.JUNGLE_LOG, 64), item(Material.JUNGLE_LOG, 32), item(Material.COCOA_BEANS, 8)),
+                    t(Tier.NORMAL, 190, brk(Material.ACACIA_LOG, 64), item(Material.ACACIA_PLANKS, 64), item(Material.ACACIA_FENCE, 16)),
+                    t(Tier.NORMAL, 200, brk(Material.DARK_OAK_LOG, 64), item(Material.DARK_OAK_LOG, 32), item(Material.APPLE, 4)),
+                    t(Tier.NORMAL, 190, brk(Material.SPRUCE_LOG, 64), brk(Material.BIRCH_LOG, 32), item(Material.BARREL, 6)),
+                    t(Tier.NORMAL, 200, brk(Material.OAK_LOG, 64), item(Material.CHARCOAL, 32), item(Material.CHEST, 8)),
+                    t(Tier.NORMAL, 210, brk(Material.MANGROVE_LOG, 48), brk(Material.MANGROVE_ROOTS, 16), item(Material.MANGROVE_PROPAGULE, 8)),
+                    t(Tier.HARD, 290, brk(Material.CHERRY_LOG, 64), item(Material.CHERRY_LOG, 48), item(Material.CHERRY_SAPLING, 8)),
+                    t(Tier.HARD, 300, brk(Material.PALE_OAK_LOG, 64), item(Material.PALE_OAK_LOG, 32), item(Material.PALE_MOSS_BLOCK, 16)),
+                    t(Tier.HARD, 290, brk(Material.DARK_OAK_LOG, 64), brk(Material.JUNGLE_LOG, 64), brk(Material.ACACIA_LOG, 64)),
+                    t(Tier.HARD, 300, brk(Material.CRIMSON_STEM, 48), brk(Material.WARPED_STEM, 48), item(Material.SHROOMLIGHT, 8)),
+                    t(Tier.HARD, 280, brk(Material.SPRUCE_LOG, 128), item(Material.SPRUCE_LOG, 64), item(Material.CAMPFIRE, 4)),
+                    t(Tier.HARD, 310, brk(Material.OAK_LOG, 64), brk(Material.BIRCH_LOG, 64), item(Material.BOOKSHELF, 6)));
             case "fermier" -> List.of(
-                    t(Tier.EASY, 110, item(Material.WHEAT, 64)),
-                    t(Tier.EASY, 110, item(Material.CARROT, 64)),
-                    t(Tier.EASY, 110, item(Material.POTATO, 64)),
-                    t(Tier.EASY, 110, item(Material.SUGAR_CANE, 64)),
-                    t(Tier.EASY, 120, brk(Material.WHEAT, 96)),
-                    t(Tier.NORMAL, 170, item(Material.BEETROOT, 64)),
-                    t(Tier.NORMAL, 170, item(Material.PUMPKIN, 24)),
-                    t(Tier.NORMAL, 170, item(Material.MELON_SLICE, 128)),
-                    t(Tier.NORMAL, 170, item(Material.SWEET_BERRIES, 48)),
-                    t(Tier.NORMAL, 180, item(Material.BREAD, 32)),
-                    t(Tier.NORMAL, 180, brk(Material.CARROTS, 128)),
-                    t(Tier.NORMAL, 190, item(Material.EGG, 16), item(Material.LEATHER, 8), item(Material.WHEAT, 32)),
-                    t(Tier.HARD, 260, item(Material.NETHER_WART, 64)),
-                    t(Tier.HARD, 260, item(Material.COCOA_BEANS, 48)),
-                    t(Tier.HARD, 270, item(Material.PUMPKIN_PIE, 16)),
-                    t(Tier.HARD, 290, item(Material.GOLDEN_CARROT, 16)),
-                    t(Tier.HARD, 280, item(Material.HAY_BLOCK, 8), item(Material.PUMPKIN, 16), item(Material.MELON, 8)));
+                    t(Tier.EASY, 120, brk(Material.WHEAT, 64), item(Material.BREAD, 16)),
+                    t(Tier.EASY, 120, brk(Material.CARROTS, 64), item(Material.CARROT, 32)),
+                    t(Tier.EASY, 120, brk(Material.POTATOES, 64), item(Material.BAKED_POTATO, 24)),
+                    t(Tier.EASY, 130, item(Material.SUGAR_CANE, 48), item(Material.PAPER, 24)),
+                    t(Tier.EASY, 140, brk(Material.WHEAT, 48), item(Material.EGG, 8), item(Material.HAY_BLOCK, 4)),
+                    t(Tier.NORMAL, 190, brk(Material.BEETROOTS, 64), item(Material.BEETROOT_SOUP, 8)),
+                    t(Tier.NORMAL, 190, brk(Material.PUMPKIN, 24), item(Material.PUMPKIN_PIE, 8), item(Material.CARVED_PUMPKIN, 4)),
+                    t(Tier.NORMAL, 190, brk(Material.MELON, 24), item(Material.MELON_SLICE, 64), item(Material.GLISTERING_MELON_SLICE, 2)),
+                    t(Tier.NORMAL, 200, brk(Material.WHEAT, 32), item(Material.LEATHER, 8), item(Material.COOKED_BEEF, 16)),
+                    t(Tier.NORMAL, 200, brk(Material.WHEAT, 32), item(Material.WHITE_WOOL, 16), item(Material.COOKED_MUTTON, 8)),
+                    t(Tier.NORMAL, 210, brk(Material.WHEAT, 64), brk(Material.CARROTS, 64), brk(Material.POTATOES, 64)),
+                    t(Tier.HARD, 290, brk(Material.NETHER_WART, 64), item(Material.NETHER_WART, 64), item(Material.FERMENTED_SPIDER_EYE, 4)),
+                    t(Tier.HARD, 290, brk(Material.COCOA, 32), item(Material.COOKIE, 32), item(Material.CAKE, 2)),
+                    t(Tier.HARD, 300, brk(Material.CARROTS, 96), item(Material.GOLDEN_CARROT, 16), item(Material.RABBIT_STEW, 2)),
+                    t(Tier.HARD, 290, brk(Material.POTATOES, 64), brk(Material.CARROTS, 64), item(Material.COOKED_PORKCHOP, 16),
+                            item(Material.FEATHER, 16)),
+                    t(Tier.HARD, 310, brk(Material.SWEET_BERRY_BUSH, 32), item(Material.HONEY_BOTTLE, 4), item(Material.HONEYCOMB, 8)),
+                    t(Tier.HARD, 280, brk(Material.BEETROOTS, 64), brk(Material.MELON, 32), brk(Material.PUMPKIN, 32)));
             case "chasseur" -> List.of(
-                    t(Tier.EASY, 110, item(Material.ROTTEN_FLESH, 32)),
-                    t(Tier.EASY, 110, item(Material.BONE, 24)),
-                    t(Tier.EASY, 110, item(Material.STRING, 16)),
-                    t(Tier.EASY, 120, kill(EntityType.ZOMBIE, 20)),
-                    t(Tier.EASY, 120, kill(EntityType.SKELETON, 15)),
-                    t(Tier.NORMAL, 180, item(Material.GUNPOWDER, 16)),
-                    t(Tier.NORMAL, 170, item(Material.SPIDER_EYE, 12)),
-                    t(Tier.NORMAL, 170, item(Material.ARROW, 64)),
-                    t(Tier.NORMAL, 180, kill(EntityType.CREEPER, 12)),
-                    t(Tier.NORMAL, 180, kill(null, 60)),
-                    t(Tier.NORMAL, 190, kill(EntityType.SPIDER, 15), item(Material.STRING, 16)),
-                    t(Tier.HARD, 270, item(Material.BLAZE_ROD, 8)),
-                    t(Tier.HARD, 270, item(Material.ENDER_PEARL, 6)),
-                    t(Tier.HARD, 280, kill(EntityType.ENDERMAN, 10)),
-                    t(Tier.HARD, 280, kill(EntityType.WITCH, 3)),
-                    t(Tier.HARD, 290, item(Material.SLIME_BALL, 12), item(Material.PHANTOM_MEMBRANE, 4)),
-                    t(Tier.HARD, 300, kill(EntityType.BLAZE, 15), item(Material.BLAZE_ROD, 6)));
+                    t(Tier.EASY, 120, kill(EntityType.ZOMBIE, 15), item(Material.ROTTEN_FLESH, 16)),
+                    t(Tier.EASY, 120, kill(EntityType.SKELETON, 12), item(Material.BONE, 16)),
+                    t(Tier.EASY, 130, kill(EntityType.SPIDER, 10), item(Material.STRING, 16)),
+                    t(Tier.EASY, 130, kill(null, 30), item(Material.ARROW, 32)),
+                    t(Tier.EASY, 140, kill(EntityType.ZOMBIE, 10), kill(EntityType.SKELETON, 10), kill(EntityType.SPIDER, 10)),
+                    t(Tier.NORMAL, 190, kill(EntityType.CREEPER, 10), item(Material.GUNPOWDER, 16), item(Material.TNT, 2)),
+                    t(Tier.NORMAL, 200, kill(EntityType.DROWNED, 10), kill(EntityType.HUSK, 10), item(Material.ROTTEN_FLESH, 32)),
+                    t(Tier.NORMAL, 190, kill(EntityType.SPIDER, 12), item(Material.SPIDER_EYE, 8), item(Material.FERMENTED_SPIDER_EYE, 2)),
+                    t(Tier.NORMAL, 200, kill(EntityType.SLIME, 15), item(Material.SLIME_BALL, 12)),
+                    t(Tier.NORMAL, 210, kill(null, 60), kill(EntityType.CREEPER, 6), item(Material.BONE_MEAL, 32)),
+                    t(Tier.NORMAL, 190, kill(EntityType.STRAY, 8), item(Material.ARROW, 64), item(Material.BOW, 1)),
+                    t(Tier.HARD, 300, kill(EntityType.ENDERMAN, 10), item(Material.ENDER_PEARL, 8), item(Material.ENDER_EYE, 2)),
+                    t(Tier.HARD, 310, kill(EntityType.BLAZE, 12), item(Material.BLAZE_ROD, 8), item(Material.BLAZE_POWDER, 8)),
+                    t(Tier.HARD, 300, kill(EntityType.WITHER_SKELETON, 8), item(Material.COAL, 32), item(Material.BONE, 32)),
+                    t(Tier.HARD, 290, kill(EntityType.WITCH, 3), kill(EntityType.PHANTOM, 4), item(Material.PHANTOM_MEMBRANE, 4)),
+                    t(Tier.HARD, 320, kill(EntityType.GUARDIAN, 10), item(Material.PRISMARINE_SHARD, 16), item(Material.PRISMARINE_CRYSTALS, 8)),
+                    t(Tier.HARD, 300, kill(EntityType.MAGMA_CUBE, 12), kill(EntityType.GHAST, 2), item(Material.MAGMA_CREAM, 8),
+                            item(Material.GHAST_TEAR, 1)));
             case "pecheur" -> List.of(
-                    t(Tier.EASY, 110, item(Material.COD, 24)),
-                    t(Tier.EASY, 120, item(Material.SALMON, 12)),
-                    t(Tier.EASY, 110, item(Material.INK_SAC, 16)),
-                    t(Tier.EASY, 110, item(Material.LILY_PAD, 6)),
-                    t(Tier.EASY, 120, fish(null, 20)),
-                    t(Tier.NORMAL, 170, item(Material.SALMON, 24)),
-                    t(Tier.NORMAL, 170, item(Material.COOKED_COD, 24)),
-                    t(Tier.NORMAL, 180, item(Material.GLOW_INK_SAC, 12)),
-                    t(Tier.NORMAL, 190, item(Material.TROPICAL_FISH, 6)),
-                    t(Tier.NORMAL, 180, fish(null, 50)),
-                    t(Tier.NORMAL, 190, item(Material.COOKED_COD, 16), item(Material.COOKED_SALMON, 16)),
-                    t(Tier.HARD, 270, item(Material.PUFFERFISH, 8)),
-                    t(Tier.HARD, 280, item(Material.NAUTILUS_SHELL, 2)),
-                    t(Tier.HARD, 300, item(Material.NAME_TAG, 1)),
-                    t(Tier.HARD, 280, fish(null, 120)),
-                    t(Tier.HARD, 290, item(Material.TROPICAL_FISH, 4), item(Material.PUFFERFISH, 4), item(Material.SALMON, 16)));
+                    t(Tier.EASY, 120, fish(null, 15), item(Material.COD, 12)),
+                    t(Tier.EASY, 120, fish(Material.COD, 12), item(Material.COOKED_COD, 12)),
+                    t(Tier.EASY, 130, fish(null, 10), kill(EntityType.SQUID, 4), item(Material.INK_SAC, 8)),
+                    t(Tier.EASY, 130, fish(Material.SALMON, 6), item(Material.COOKED_SALMON, 6)),
+                    t(Tier.EASY, 140, fish(null, 12), item(Material.LILY_PAD, 4), item(Material.KELP, 32)),
+                    t(Tier.NORMAL, 190, fish(null, 35), item(Material.COOKED_COD, 16), item(Material.COOKED_SALMON, 8)),
+                    t(Tier.NORMAL, 200, fish(Material.SALMON, 12), fish(Material.COD, 20)),
+                    t(Tier.NORMAL, 190, kill(EntityType.GLOW_SQUID, 4), item(Material.GLOW_INK_SAC, 8), item(Material.SEA_PICKLE, 8)),
+                    t(Tier.NORMAL, 200, fish(null, 25), item(Material.KELP, 64), item(Material.DRIED_KELP_BLOCK, 8)),
+                    t(Tier.NORMAL, 210, fish(null, 30), kill(EntityType.DROWNED, 6), item(Material.COPPER_INGOT, 8)),
+                    t(Tier.NORMAL, 190, fish(Material.PUFFERFISH, 3), fish(null, 20), item(Material.PUFFERFISH, 2)),
+                    t(Tier.HARD, 300, fish(null, 80), item(Material.COOKED_COD, 32), item(Material.COOKED_SALMON, 16)),
+                    t(Tier.HARD, 310, fish(Material.PUFFERFISH, 6), fish(Material.TROPICAL_FISH, 2), item(Material.PUFFERFISH, 2)),
+                    t(Tier.HARD, 320, fish(null, 60), item(Material.NAME_TAG, 1)),
+                    t(Tier.HARD, 300, fish(null, 40), item(Material.NAUTILUS_SHELL, 1), item(Material.COOKED_SALMON, 16)),
+                    t(Tier.HARD, 290, kill(EntityType.GUARDIAN, 6), fish(null, 30), item(Material.PRISMARINE_SHARD, 16)),
+                    t(Tier.HARD, 300, fish(Material.SALMON, 24), kill(EntityType.SQUID, 8), item(Material.BOOK, 6)));
             default -> null;
         });
     }

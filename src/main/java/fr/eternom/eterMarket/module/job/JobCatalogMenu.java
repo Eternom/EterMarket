@@ -140,7 +140,7 @@ class JobCatalogMenu implements Menu {
         lore.add(text("catalog.item.add-objective"));
         lore.add(text("catalog.item.remove"));
         return Items.item(template.objectives().getFirst().icon(),
-                gui.texts().name(viewer, new JobRepository.Quest(0, 0, template.tier(), template.objectives(), template.reward(), 0, false, false)),
+                gui.texts().name(viewer, new JobRepository.Quest(0, 0, template.tier(), template.objectives(), template.reward(), List.of(), false, false)),
                 lore);
     }
 

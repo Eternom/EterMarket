@@ -39,7 +39,7 @@ public class JobProgress {
     private static final String JOB_TAG = "job";
 
     /** Un progrès pas encore écrit en base. */
-    private record Key(UUID player, int slot, long day, String objectives, int target) {
+    private record Key(UUID player, int slot, long day, String objectives, int action, int target) {
     }
 
     /** Métier et quêtes du jour d'un joueur connecté. */
@@ -99,8 +99,14 @@ public class JobProgress {
         Active previous = active.get(uuid);
         List<Quest> merged = new ArrayList<>();
         for (Quest quest : quests) {
-            Integer waiting = pending.get(key(uuid, quest));
-            Quest updated = waiting == null ? quest : quest.withProgress(Math.min(quest.target(), quest.progress() + waiting));
+            Quest updated = quest;
+            List<Objective> actions = quest.actions();
+            for (int action = 0; action < actions.size(); action++) {
+                Integer waiting = pending.get(key(uuid, quest, action));
+                if (waiting != null) {
+                    updated = updated.withProgress(action, Math.min(actions.get(action).amount(), quest.progress(action) + waiting));
+                }
+            }
             if (previous != null && previous.job().equals(job)) {
                 boolean tracked = previous.quests().stream().anyMatch(q -> q.tracked() && q.slot() == quest.slot() && q.day() == quest.day());
                 updated = updated.withTracked(tracked && !updated.done());
@@ -130,7 +136,10 @@ public class JobProgress {
 
     // ---------- Actions ----------
 
-    /** Thread principal : le joueur a fait amount fois une action ; compte pour ses quêtes dont l'action correspond. */
+    /**
+     * Thread principal : le joueur a fait amount fois une action ; compte pour chaque action de ses quêtes qui
+     * correspond (une même créature peut compter pour « tuer des zombies » et « tuer des monstres »).
+     */
     public void record(Player player, Objective.Kind kind, Predicate<Objective> matches, int amount) {
         Active state = active.get(player.getUniqueId());
         if (state == null) {
@@ -140,22 +149,30 @@ public class JobProgress {
         List<Quest> quests = state.quests();
         for (int i = 0; i < quests.size(); i++) {
             Quest quest = quests.get(i);
-            Optional<Objective> action = quest.action();
-            if (quest.done() || quest.day() != today || action.isEmpty() || action.get().kind() != kind
-                    || quest.actionComplete() || !matches.test(action.get())) {
+            if (quest.done() || quest.day() != today) {
                 continue;
             }
-            int progress = Math.min(quest.target(), quest.progress() + amount);
-            pending.merge(key(player.getUniqueId(), quest), progress - quest.progress(), Integer::sum);
-            quests.set(i, quest.withProgress(progress));
-            if (progress >= quest.target()) {
-                messages.send(player, "quest.action-done");
-                player.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.6f);
-            } else {
-                player.sendActionBar(texts.objective(player, action.get(), progress));
+            List<Objective> actions = quest.actions();
+            for (int action = 0; action < actions.size(); action++) {
+                Objective objective = actions.get(action);
+                int before = quest.progress(action);
+                if (objective.kind() != kind || before >= objective.amount() || !matches.test(objective)) {
+                    continue;
+                }
+                int progress = Math.min(objective.amount(), before + amount);
+                pending.merge(key(player.getUniqueId(), quest, action), progress - before, Integer::sum);
+                quest = quest.withProgress(action, progress);
+                if (progress >= objective.amount()) {
+                    messages.send(player, quest.actionComplete() ? "quest.action-done" : "quest.step-done");
+                    player.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.6f);
+                } else {
+                    player.sendActionBar(texts.objective(player, objective, progress));
+                }
             }
+            quests.set(i, quest);
         }
     }
+
 
     /** Bloquant : écrit les progrès en attente d'un joueur (avant de lire ou valider ses quêtes). */
     void flush(UUID player) {
@@ -173,12 +190,13 @@ public class JobProgress {
     private void write(Key key) {
         Integer delta = pending.remove(key);
         if (delta != null && delta > 0) {
-            repository.addProgress(key.player(), key.slot(), key.day(), key.objectives(), delta, key.target());
+            repository.addProgress(key.player(), key.slot(), key.day(), key.objectives(), key.action(), delta, key.target());
         }
     }
 
-    private static Key key(UUID player, Quest quest) {
-        return new Key(player, quest.slot(), quest.day(), Objective.format(quest.objectives()), quest.target());
+    private static Key key(UUID player, Quest quest, int action) {
+        return new Key(player, quest.slot(), quest.day(), Objective.format(quest.objectives()), action,
+                quest.actions().get(action).amount());
     }
 
     // ---------- Sidebar : métier ----------

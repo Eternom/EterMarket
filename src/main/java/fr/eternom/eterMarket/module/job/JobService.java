@@ -35,8 +35,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * `daily` (facile, normale, difficile), tirée au hasard dans le répertoire du métier, puis une quête bonus mieux payée
  * quand elles sont faites. Une fois par jour, une quête peut être changée contre une autre du même niveau (payant).
  *
- * Une quête a un ou plusieurs objectifs : des objets à livrer, et au plus une action (tuer, casser, pêcher) comptée par
- * JobProgress. Valider au PNJ : l'action doit être faite, le PNJ prend les objets (simples seulement, sans nom ni
+ * Une quête a un ou plusieurs objectifs : des objets à livrer, et jusqu'à 3 actions (tuer, casser, pêcher) comptées par
+ * JobProgress. Valider au PNJ : les actions doivent être faites, le PNJ prend les objets (simples seulement, sans nom ni
  * enchantement), la base marque la quête faite (une seule fois, même en cliquant deux fois), les objets vont dans le
  * STOCK COMMUN et la récompense est versée. Si la quête était déjà faite, les objets sont rendus.
  */
@@ -74,9 +74,9 @@ public class JobService {
         this.progress = new JobProgress(plugin, repository, this, messages, texts);
     }
 
-    /** Bloquant : premier démarrage, pose le répertoire de départ des métiers qui n'en ont pas. */
+    /** Bloquant : pose le répertoire de départ des métiers, une seule fois par métier sur tout le réseau. */
     public void seedCatalogs() {
-        jobs.icons().keySet().forEach(job -> Jobs.defaults(job).ifPresent(defaults -> repository.seedIfEmpty(job, defaults)));
+        jobs.icons().keySet().forEach(job -> Jobs.defaults(job).ifPresent(defaults -> repository.seedOnce(job, defaults)));
     }
 
     /** Bloquant : remet le répertoire de départ du métier ; false si le métier n'en a pas (métier ajouté dans la config). */
@@ -160,7 +160,7 @@ public class JobService {
         UUID uuid = player.getUniqueId();
         Tasks.async(plugin, player, () -> {
             progress.flush(uuid);
-            if (!repository.complete(uuid, quest.slot(), quest.day(), quest.target())) {
+            if (!repository.complete(uuid, quest.slot(), quest.day(), quest.targets())) {
                 return false;
             }
             items.forEach(item -> stock.add(item.material(), item.amount()));
@@ -316,7 +316,7 @@ public class JobService {
     /** Recopie une quête du répertoire ; la bonus est payée bonus-multiplier fois plus. */
     private Quest fromTemplate(int slot, long day, Template template) {
         double reward = slot == Jobs.BONUS_SLOT ? Math.round(template.reward() * jobs.bonusMultiplier()) : template.reward();
-        return new Quest(slot, day, template.tier(), template.objectives(), reward, 0, false, false);
+        return new Quest(slot, day, template.tier(), template.objectives(), reward, List.of(0, 0, 0), false, false);
     }
 
     /** Objets simples (sans nom ni enchantement) de cette matière dans l'inventaire. */

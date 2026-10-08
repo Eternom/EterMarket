@@ -191,6 +191,7 @@ quest:
   missing: "<error>Il te manque des objets (simples, sans nom ni enchantement) : regarde la quête."
   action-missing: "<error>Objectif pas encore atteint : regarde la quête."
   action-done: "<success>Objectif atteint !</success> <info>Retourne voir ton PNJ pour valider la quête."
+  step-done: "<success>Étape terminée !</success> <info>Il reste d'autres objectifs : regarde la quête."
   already-done: "<error>Cette quête est déjà terminée : tes objets te sont rendus."
   done: "<info>Quête validée ! <accent>+<reward>"
   bonus-done: "<info>Quête bonus validée ! <accent>+<reward>"
@@ -231,7 +232,7 @@ catalog:
     remove: "<accent>Clic droit <dark_gray>· <info>retirer"
   edit:
     title: "<primary>Quête"
-    body: "Niveau, récompense en Heloks (repères : facile 100-130, normale 160-200, difficile 250-300) et quantité de chaque objectif (0 = le retirer)."
+    body: "Niveau, récompense en Heloks (repères : facile 110-140, normale 170-210, difficile 270-320) et quantité de chaque objectif (0 = le retirer)."
     tier: "Niveau"
     amount: "Quantité"
     reward: "Récompense"

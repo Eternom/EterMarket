@@ -55,7 +55,7 @@ class QuestTexts {
     static int have(Player player, Quest quest, Objective objective) {
         return objective.kind() == Objective.Kind.ITEM
                 ? JobService.count(player.getInventory(), objective.material())
-                : quest.progress();
+                : quest.progressOf(objective);
     }
 
     /** Tous les objectifs sont remplis : il ne reste qu'à valider au PNJ. */

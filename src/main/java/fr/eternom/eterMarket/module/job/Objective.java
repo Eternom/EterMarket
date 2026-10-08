@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * - KILL, BREAK, FISH : tuer, casser, pêcher. Ces actions sont comptées pendant le jeu (progression gardée en base),
  *   puis la quête se valide au PNJ comme les autres.
  * target : la matière (ITEM, BREAK, FISH) ou le type de créature (KILL). ANY = n'importe lequel : un monstre pour KILL,
- * une prise pour FISH. Une quête a au plus UN objectif d'action (une seule progression par quête).
+ * une prise pour FISH. Une quête a au plus JobRepository.MAX_ACTIONS objectifs d'action (un compteur chacun).
  * En base : "KIND:TARGET:AMOUNT", séparés par des ';' (ex : "ITEM:IRON_INGOT:16;ITEM:GOLD_INGOT:8").
  */
 public record Objective(Kind kind, String target, int amount) {

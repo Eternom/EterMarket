@@ -191,6 +191,7 @@ quest:
   missing: "<error>You are missing items (plain, no name or enchantment): check the quest."
   action-missing: "<error>Objective not reached yet: check the quest."
   action-done: "<success>Objective reached!</success> <info>Go back to your NPC to complete the quest."
+  step-done: "<success>Step done!</success> <info>Other objectives remain: check the quest."
   already-done: "<error>This quest is already completed: your items are given back."
   done: "<info>Quest completed! <accent>+<reward>"
   bonus-done: "<info>Bonus quest completed! <accent>+<reward>"
@@ -231,7 +232,7 @@ catalog:
     remove: "<accent>Right click <dark_gray>· <info>remove"
   edit:
     title: "<primary>Quest"
-    body: "Level, reward in Heloks (guide: easy 100-130, normal 160-200, hard 250-300) and the amount of each objective (0 = remove it)."
+    body: "Level, reward in Heloks (guide: easy 110-140, normal 170-210, hard 270-320) and the amount of each objective (0 = remove it)."
     tier: "Level"
     amount: "Amount"
     reward: "Reward"

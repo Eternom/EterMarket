@@ -56,8 +56,10 @@ La table compte aussi les quêtes accomplies de chaque joueur (base de futurs ni
 **Répertoire** (`etermarket_job_templates`) : les quêtes possibles de chaque métier, avec un **niveau** (`Tier` :
 facile, normale, difficile), une récompense et des **objectifs** (`Objective`, en base `KIND:CIBLE:QUANTITÉ;...`) :
 - `ITEM` : objets à livrer, un ou plusieurs (« commande » : 8 fer + 4 or + 16 charbon) ;
-- `KILL`, `BREAK`, `FISH` : tuer, casser, pêcher, **au plus une action par quête** (une seule progression), éventuellement
-  avec des objets (« tue 15 araignées et rapporte 16 ficelles »). Cible `ANY` : n'importe quel monstre / prise.
+- `KILL`, `BREAK`, `FISH` : tuer, casser, pêcher, **jusqu'à 3 actions par quête** (`MAX_ACTIONS`, un compteur chacune :
+  colonnes `progress`, `progress_2`, `progress_3`), avec des objets (« tue 10 zombies, 10 squelettes, 10 araignées »,
+  « casse 16 minerais de fer et rapporte 16 lingots »). Cible `ANY` : n'importe quel monstre / prise. Une même créature
+  compte pour chaque action qui lui correspond (« tuer des zombies » et « tuer des monstres »).
 
 **Quêtes du jour** (`etermarket_job_daily`) : à minuit (`jobs.time-zone`), une quête par niveau de `daily`
 (facile, normale, difficile ; un niveau vide prend dans les autres), recopiées depuis le répertoire (le modifier ne
@@ -67,7 +69,7 @@ elles sont faites. **Changer une quête** pas encore faite contre une autre du m
 
 **Actions** (`JobProgress`, `JobProgressListener`) : comptées sur le thread principal pour les joueurs connectés
 (quêtes chargées à la connexion), écrites en base par paquets toutes les 30 s, à la déconnexion et avant chaque
-validation, en **ajoutant** (`progress = LEAST(cible, progress + n)`) : deux serveurs ne s'écrasent pas. La clé d'un
+validation, en **ajoutant**, compteur par compteur (`progress_N = LEAST(cible, progress_N + n)`) : deux serveurs ne s'écrasent pas. La clé d'un
 progrès inclut les objectifs : celui d'une quête changée entre-temps ne compte pas pour la nouvelle. Contre la triche :
 créatures apparues naturellement seulement (pas de spawner, d'œuf, d'élevage, de commande) et tuées par le joueur ;
 blocs posés par un joueur ignorés (retenus en mémoire sur le serveur, 200 000 au plus) ; cultures seulement mûres ;
@@ -88,9 +90,11 @@ progress >= cible`) → objets versés dans le **stock commun** → récompense 
 serveur) : objets rendus.
 
 **Le PNJ de métier** ouvre la guilde (rejoindre) ou les quêtes du jour ; un onglet mène à sa **boutique** (objets utiles
-au métier, même éditeur que les boutiques). **Répertoire de départ** (`Jobs#defaults`, 16 à 18 quêtes par métier) posé
-au premier démarrage ; `/market jobs reset <métier> confirm` y revient. Repères : facile 100-130, normale 160-200,
-difficile 250-300 ; une journée complète ≈ 800.
+au métier, même éditeur que les boutiques). **Répertoire de départ** (`Jobs#defaults`, 17 quêtes par métier, chacune avec plusieurs
+choses à faire) posé **une seule fois par métier** sur tout le réseau : le serveur qui inscrit le métier dans
+`etermarket_job_seeded` (`INSERT IGNORE`) est le seul à le poser, même si plusieurs démarrent ensemble ; un métier vidé
+exprès le reste. `/market jobs reset <métier> confirm` y revient. Repères : facile 110-140, normale 170-210,
+difficile 270-320 ; une journée complète ≈ 850.
 
 **Éditeur du répertoire** (Maj + clic droit sur le PNJ, bouton « Répertoire des quêtes ») : nouvelle quête de
 livraison (objet en main) ou d'action (Dialog : action, cible, quantité, niveau, récompense) ; clic gauche = niveau,

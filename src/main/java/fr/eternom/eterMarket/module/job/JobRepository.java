@@ -5,11 +5,13 @@ import fr.eternom.eterLib.helper.sql.Database;
 import fr.eternom.eterLib.helper.sql.Row;
 import org.bukkit.Material;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 /**
  * Données de la guilde des métiers, communes à tout le réseau. Appels bloquants : hors du thread principal.
@@ -17,8 +19,8 @@ import java.util.UUID;
  *   (toutes, pour de futurs niveaux) et le dernier jour où il a changé une quête ;
  * - etermarket_job_templates : le répertoire des quêtes possibles de chaque métier (niveau, objectifs, récompense) ;
  * - etermarket_job_daily : les quêtes du jour de chaque joueur (une ligne par emplacement 0 à 3, le 3 étant le bonus),
- *   recopiées depuis le répertoire (le modifier ne change pas les quêtes déjà tirées), avec la progression de l'action
- *   et la quête suivie dans la sidebar.
+ *   recopiées depuis le répertoire (le modifier ne change pas les quêtes déjà tirées), avec la progression des actions
+ *   (une colonne par action, MAX_ACTIONS) et la quête suivie dans la sidebar.
  * Les tables de la 1.2 (job_catalog, job_quests : un seul objet par quête) sont supprimées au démarrage.
  */
 public class JobRepository {
@@ -26,6 +28,12 @@ public class JobRepository {
     private static final String MEMBERS = "job_members";
     private static final String TEMPLATES = "job_templates";
     private static final String DAILY = "job_daily";
+    /** Métiers dont le répertoire de départ a déjà été posé (une seule fois sur tout le réseau). */
+    private static final String SEEDED = "job_seeded";
+    /** Actions (tuer, casser, pêcher) au plus par quête : un compteur en base pour chacune. */
+    public static final int MAX_ACTIONS = 3;
+    /** Compteur de chaque action, dans l'ordre (progress : nom d'avant 1.3.6, quand une quête avait une seule action). */
+    private static final List<String> PROGRESS = List.of("progress", "progress_2", "progress_3");
 
     public record Member(String job, long changedAt, int completed, long rerollDay) {
     }
@@ -49,30 +57,48 @@ public class JobRepository {
         }
     }
 
-    /** Une quête du jour d'un joueur. day : jour julien du tirage ; slot 3 = quête bonus ; progress : de l'action. */
-    public record Quest(int slot, long day, Tier tier, List<Objective> objectives, double reward, int progress,
+    /**
+     * Une quête du jour d'un joueur. day : jour julien du tirage ; slot 3 = quête bonus ; progress : un compteur par
+     * action (tuer, casser, pêcher), dans l'ordre de actions().
+     */
+    public record Quest(int slot, long day, Tier tier, List<Objective> objectives, double reward, List<Integer> progress,
                         boolean done, boolean tracked) {
 
-        /** L'objectif d'action (tuer, casser, pêcher), s'il y en a un. */
-        public Optional<Objective> action() {
-            return objectives.stream().filter(o -> o.kind().isAction()).findFirst();
+        /** Les objectifs d'action, au plus MAX_ACTIONS (un compteur en base pour chacun). */
+        public List<Objective> actions() {
+            return objectives.stream().filter(o -> o.kind().isAction()).limit(MAX_ACTIONS).toList();
         }
 
         public List<Objective> items() {
             return objectives.stream().filter(o -> o.kind() == Objective.Kind.ITEM).toList();
         }
 
-        /** Quantité d'action à atteindre (0 sans action). */
-        public int target() {
-            return action().map(Objective::amount).orElse(0);
+        /** Progression de l'action numéro action (0 si elle n'existe pas). */
+        public int progress(int action) {
+            return action < progress.size() ? progress.get(action) : 0;
+        }
+
+        /** Progression de cet objectif d'action (0 pour un objet ou un objectif inconnu). */
+        public int progressOf(Objective objective) {
+            int action = actions().indexOf(objective);
+            return action < 0 ? 0 : progress(action);
+        }
+
+        /** Quantité à atteindre pour chaque compteur (0 pour un compteur inutilisé). */
+        public List<Integer> targets() {
+            List<Objective> actions = actions();
+            return IntStream.range(0, MAX_ACTIONS).mapToObj(i -> i < actions.size() ? actions.get(i).amount() : 0).toList();
         }
 
         public boolean actionComplete() {
-            return progress >= target();
+            List<Objective> actions = actions();
+            return IntStream.range(0, actions.size()).allMatch(i -> progress(i) >= actions.get(i).amount());
         }
 
-        public Quest withProgress(int progress) {
-            return new Quest(slot, day, tier, objectives, reward, progress, done, tracked);
+        public Quest withProgress(int action, int value) {
+            List<Integer> next = new ArrayList<>(IntStream.range(0, MAX_ACTIONS).mapToObj(this::progress).toList());
+            next.set(action, value);
+            return new Quest(slot, day, tier, objectives, reward, List.copyOf(next), done, tracked);
         }
 
         public Quest withDone() {
@@ -110,6 +136,8 @@ public class JobRepository {
                 Column.of("progress", Column.Type.INT).notNull(),
                 Column.of("done", Column.Type.BOOLEAN).notNull(),
                 Column.of("tracked", Column.Type.BOOLEAN).notNull());
+        database.createTable(SEEDED, Column.of("job", Column.Type.STRING).length(32).primaryKey());
+        PROGRESS.stream().skip(1).forEach(column -> database.addColumn(DAILY, Column.of(column, Column.Type.INT)));
         // Tables de la 1.2, remplacées par job_templates et job_daily (pas de table morte dans la base)
         database.execute("DROP TABLE IF EXISTS " + database.table("job_catalog") + ", " + database.table("job_quests"));
     }
@@ -169,9 +197,16 @@ public class JobRepository {
         database.delete(TEMPLATES, Map.of("id", id));
     }
 
-    /** Répertoire de départ, seulement si celui de ce métier est vide (premier démarrage). */
-    public void seedIfEmpty(String job, List<Template> defaults) {
-        if (catalog(job).isEmpty()) {
+    /**
+     * Répertoire de départ, posé UNE seule fois par métier sur tout le réseau : le serveur qui inscrit le métier dans
+     * job_seeded (INSERT IGNORE, atomique) est le seul à le poser, même si plusieurs serveurs démarrent ensemble. Un
+     * métier vidé exprès en jeu le reste. Un métier qui a déjà des quêtes (d'avant 1.3.6) est seulement inscrit.
+     */
+    public void seedOnce(String job, List<Template> defaults) {
+        String insert = "INSERT IGNORE INTO " + database.table(SEEDED) + " (job) VALUES (?)";
+        if (!catalog(job).isEmpty()) {
+            database.execute(insert, job);
+        } else if (database.execute(insert, job) > 0) {
             defaults.forEach(template -> addTemplate(job, template.tier(), template.objectives(), template.reward()));
         }
     }
@@ -187,7 +222,8 @@ public class JobRepository {
     public List<Quest> quests(UUID player) {
         return database.get(DAILY, Map.of("uuid", player)).stream()
                 .map(row -> new Quest(row.getInt("slot"), row.getLong("day"), Tier.of(row.getString("tier")),
-                        Objective.parse(row.getString("objectives")), row.getDouble("reward"), row.getInt("progress"),
+                        Objective.parse(row.getString("objectives")), row.getDouble("reward"),
+                        PROGRESS.stream().map(row::getInt).toList(),
                         row.getBoolean("done"), row.getBoolean("tracked")))
                 .filter(quest -> quest.tier() != null && !quest.objectives().isEmpty())
                 .toList();
@@ -200,22 +236,31 @@ public class JobRepository {
     }
 
     public void saveQuest(UUID player, Quest quest) {
-        database.set(DAILY, Map.of("uuid", player, "slot", quest.slot(), "day", quest.day(), "tier", quest.tier().id(),
-                "objectives", Objective.format(quest.objectives()), "reward", quest.reward(), "progress", quest.progress(),
-                "done", quest.done(), "tracked", quest.tracked()), "uuid", "slot");
+        Map<String, Object> values = new HashMap<>(Map.of("uuid", player, "slot", quest.slot(), "day", quest.day(),
+                "tier", quest.tier().id(), "objectives", Objective.format(quest.objectives()), "reward", quest.reward(),
+                "done", quest.done(), "tracked", quest.tracked()));
+        for (int action = 0; action < MAX_ACTIONS; action++) {
+            values.put(PROGRESS.get(action), quest.progress(action));
+        }
+        database.set(DAILY, values, "uuid", "slot");
     }
 
     /** Remplace une quête pas encore faite par une autre (changement de quête) : false si elle a été faite entre-temps. */
     public boolean swapQuest(UUID player, Quest replacement) {
-        return database.execute("UPDATE " + database.table(DAILY) + " SET tier = ?, objectives = ?, reward = ?, progress = 0"
+        return database.execute("UPDATE " + database.table(DAILY) + " SET tier = ?, objectives = ?, reward = ?,"
+                        + " progress = 0, progress_2 = 0, progress_3 = 0"
                         + " WHERE uuid = ? AND slot = ? AND day = ? AND done = FALSE",
                 replacement.tier().id(), Objective.format(replacement.objectives()), replacement.reward(),
                 player, replacement.slot(), replacement.day()) > 0;
     }
 
-    /** Ajoute de la progression d'action (sans dépasser target) ; ignoré si la quête est faite, d'un autre jour ou changée. */
-    public void addProgress(UUID player, int slot, long day, String objectives, int delta, int target) {
-        database.execute("UPDATE " + database.table(DAILY) + " SET progress = LEAST(?, progress + ?)"
+    /**
+     * Ajoute de la progression à l'action numéro action (sans dépasser target) ; ignoré si la quête est faite, d'un
+     * autre jour ou changée.
+     */
+    public void addProgress(UUID player, int slot, long day, String objectives, int action, int delta, int target) {
+        String column = PROGRESS.get(action);
+        database.execute("UPDATE " + database.table(DAILY) + " SET " + column + " = LEAST(?, COALESCE(" + column + ", 0) + ?)"
                 + " WHERE uuid = ? AND slot = ? AND day = ? AND objectives = ? AND done = FALSE", target, delta, player, slot, day, objectives);
     }
 
@@ -225,12 +270,14 @@ public class JobRepository {
     }
 
     /**
-     * Marque la quête faite, seulement si elle ne l'était pas et que l'action est accomplie : deux validations
-     * simultanées ne paient qu'une fois.
+     * Marque la quête faite, seulement si elle ne l'était pas et que chaque action est accomplie (targets : un par
+     * compteur) : deux validations simultanées ne paient qu'une fois.
      */
-    public boolean complete(UUID player, int slot, long day, int target) {
+    public boolean complete(UUID player, int slot, long day, List<Integer> targets) {
         return database.execute("UPDATE " + database.table(DAILY) + " SET done = TRUE, tracked = FALSE"
-                + " WHERE uuid = ? AND slot = ? AND day = ? AND done = FALSE AND progress >= ?", player, slot, day, target) > 0;
+                        + " WHERE uuid = ? AND slot = ? AND day = ? AND done = FALSE AND progress >= ?"
+                        + " AND COALESCE(progress_2, 0) >= ? AND COALESCE(progress_3, 0) >= ?",
+                player, slot, day, targets.get(0), targets.get(1), targets.get(2)) > 0;
     }
 
     private static Template toTemplate(Row row) {
