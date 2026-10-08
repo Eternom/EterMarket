@@ -22,7 +22,9 @@ neuf) ; au démarrage, un lobby passe ses anciens emplacements (à son nom) en `
 les autres serveurs (rechargement).
 
 **Mannequins natifs** (`NpcSpawner`), pas de Citizens : skin par pseudo (résolu par le jeu) ou texture précise
-(valeur + signature, ex : MineSkin, prioritaire) ; invulnérables, immobiles, silencieux. **Jamais enregistrés dans le
+(valeur + signature, ex : MineSkin, prioritaire) ; invulnérables, immobiles, silencieux. Tout dégât et tout feu sont annulés
+(`NpcListener`, même en créatif), et un PNJ disparu quand même réapparaît (vérifié toutes les 5 s). Tête et corps
+tournés vers le joueur le plus proche (8 blocs, tous les 2 ticks), sans bouger ; sinon, la direction de l'emplacement. **Jamais enregistrés dans le
 monde** (non persistants) : ils apparaissent au chargement du chunk de leur emplacement et disparaissent avec lui,
 donc jamais de doublon après un redémarrage. Chaque Mannequin porte l'identifiant de son PNJ (données persistantes de
 l'entité) pour reconnaître un clic.

@@ -9,14 +9,17 @@ import io.papermc.paper.datacomponent.item.ResolvableProfile;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Mannequin;
+import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 import java.util.Comparator;
 import java.util.List;
@@ -35,6 +38,11 @@ import java.util.logging.Logger;
  */
 public class NpcSpawner {
 
+    private static final long LOOK_TICKS = 2;
+    private static final long RESPAWN_TICKS = 5 * 20;
+    private static final double LOOK_RANGE = 8;
+
+    private final JavaPlugin plugin;
     private final Messages messages;
     private final Logger logger;
     private final NamespacedKey npcKey;
@@ -44,6 +52,7 @@ public class NpcSpawner {
     private final Map<Long, UUID> alive = new ConcurrentHashMap<>();
 
     public NpcSpawner(JavaPlugin plugin, Messages messages) {
+        this.plugin = plugin;
         this.messages = messages;
         this.logger = plugin.getLogger();
         this.npcKey = new NamespacedKey(plugin, "npc");
@@ -57,6 +66,38 @@ public class NpcSpawner {
         placements.clear();
         serverPlacements.forEach(placement -> placements.put(placement.id(), placement));
         placements.values().forEach(this::spawnIfLoaded);
+    }
+
+    /** Regard vers le joueur le plus proche (tous les 2 ticks) et retour d'un PNJ disparu (toutes les 5 s). */
+    public void start() {
+        Bukkit.getScheduler().runTaskTimer(plugin, this::lookAtPlayers, LOOK_TICKS, LOOK_TICKS);
+        Bukkit.getScheduler().runTaskTimer(plugin, () -> placements.values().forEach(this::spawnIfLoaded), RESPAWN_TICKS, RESPAWN_TICKS);
+    }
+
+    /**
+     * Tête et corps tournés vers le joueur le plus proche (à moins de LOOK_RANGE blocs), sans bouger ; sinon, la
+     * direction de l'emplacement. Le même regard pour tous : un regard propre à chaque joueur demanderait des paquets.
+     */
+    private void lookAtPlayers() {
+        alive.forEach((placementId, uuid) -> {
+            Placement placement = placements.get(placementId);
+            if (placement == null || !(Bukkit.getEntity(uuid) instanceof Mannequin mannequin)) {
+                return;
+            }
+            Location eyes = mannequin.getEyeLocation();
+            Optional<Player> nearest = eyes.getNearbyPlayers(LOOK_RANGE).stream()
+                    .filter(player -> player.getGameMode() != GameMode.SPECTATOR)
+                    .min(Comparator.comparingDouble(player -> player.getEyeLocation().distanceSquared(eyes)));
+            float yaw = placement.yaw();
+            float pitch = 0;
+            if (nearest.isPresent()) {
+                Vector toPlayer = nearest.get().getEyeLocation().toVector().subtract(eyes.toVector());
+                yaw = (float) Math.toDegrees(Math.atan2(-toPlayer.getX(), toPlayer.getZ()));
+                pitch = (float) Math.toDegrees(-Math.atan2(toPlayer.getY(), Math.hypot(toPlayer.getX(), toPlayer.getZ())));
+            }
+            mannequin.setRotation(yaw, pitch);
+            mannequin.setBodyYaw(yaw);
+        });
     }
 
     public Optional<Npc> npc(String id) {

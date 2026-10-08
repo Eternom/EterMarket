@@ -6,7 +6,10 @@ import fr.eternom.eterMarket.module.npc.NpcRepository.Role;
 import fr.eternom.eterMarket.module.shop.ShopGui;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityCombustEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -48,6 +51,21 @@ public class NpcListener implements Listener {
                 shops.open(player, npc.id(), 0);
             }
         });
+    }
+
+    /** Invincibles, même face à un joueur en créatif (setInvulnerable ne l'arrête pas) ni au feu. */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onDamage(EntityDamageEvent event) {
+        if (spawner.npcOf(event.getEntity()).isPresent()) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onCombust(EntityCombustEvent event) {
+        if (spawner.npcOf(event.getEntity()).isPresent()) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler

@@ -48,6 +48,7 @@ public class NpcService {
 
     /** Démarrage : abonnement aux rechargements des autres serveurs, puis premier chargement. */
     public void start() {
+        spawner.start();
         bus.on(RELOAD, data -> reload()); // le serveur d'origine a déjà appliqué sa propre modification
         reload();
     }
