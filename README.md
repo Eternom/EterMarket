@@ -9,7 +9,7 @@ Document développeur, à tenir à jour avec le code.
 
 - **EterLib 1.10.0+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes de la sidebar.
 - **EterTab** (facultatif) : affiche la quête suivie et le métier (`<tag_job>`) dans la sidebar.
-- **EterEconomy 2.2.1+** (son API `EconomyApi`) pour payer (sinon : « économie indisponible »).
+- **EterEconomy 2.2.2+** (son API `EconomyApi`) pour payer (sinon : « économie indisponible »).
 - Client 1.21.6+ pour les Dialogs (quantité, éditeur).
 
 ## PNJ (`module/npc`)
