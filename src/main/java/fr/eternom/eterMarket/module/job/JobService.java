@@ -7,7 +7,7 @@ import fr.eternom.eterMarket.module.job.JobRepository.Member;
 import fr.eternom.eterMarket.module.job.JobRepository.Quest;
 import fr.eternom.eterMarket.module.job.JobRepository.Template;
 import fr.eternom.eterMarket.module.stock.StockRepository;
-import net.milkbowl.vault.economy.Economy;
+import fr.eternom.eterEconomy.api.EconomyApi;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
@@ -108,7 +108,7 @@ public class JobService {
     /** Thread principal : rejoindre le métier (gratuit la première fois, sinon payant et limité dans le temps). */
     public void join(Player player, Board.Join join, Runnable after) {
         boolean free = join.current().isEmpty();
-        Economy economy = Money.economy();
+        EconomyApi economy = EconomyApi.get().orElse(null);
         if (!free && jobs.changeCost() > 0 && economy == null) {
             messages.send(player, "economy.unavailable");
             return;
@@ -121,7 +121,7 @@ public class JobService {
                 if (wait > 0) {
                     return "job.change-too-soon";
                 }
-                if (jobs.changeCost() > 0 && !economy.withdrawPlayer(player, jobs.changeCost()).transactionSuccess()) {
+                if (jobs.changeCost() > 0 && !economy.withdraw(player.getUniqueId(), jobs.changeCost(), "EterMarket · métiers")) {
                     return "job.change-not-enough";
                 }
             }
@@ -139,7 +139,7 @@ public class JobService {
 
     /** Thread principal : valider une quête auprès du PNJ. */
     public void deliver(Player player, Quest shown, Runnable after) {
-        Economy economy = Money.economy();
+        EconomyApi economy = EconomyApi.get().orElse(null);
         if (economy == null) {
             messages.send(player, "economy.unavailable");
             return;
@@ -164,7 +164,7 @@ public class JobService {
                 return false;
             }
             items.forEach(item -> stock.add(item.material(), item.amount()));
-            economy.depositPlayer(player, quest.reward());
+            economy.deposit(player.getUniqueId(), quest.reward(), "EterMarket · métiers");
             repository.addCompleted(uuid);
             return true;
         }, completed -> {
@@ -189,7 +189,7 @@ public class JobService {
      * reroll-cost. La progression de l'ancienne est perdue.
      */
     public void reroll(Player player, String job, Quest quest, Runnable after) {
-        Economy economy = Money.economy();
+        EconomyApi economy = EconomyApi.get().orElse(null);
         if (!jobs.rerollEnabled() || quest.done()) {
             return;
         }
@@ -213,7 +213,7 @@ public class JobService {
             if (!repository.claimReroll(uuid, today)) {
                 return "quest.reroll-used";
             }
-            if (jobs.rerollCost() > 0 && !economy.withdrawPlayer(player, jobs.rerollCost()).transactionSuccess()) {
+            if (jobs.rerollCost() > 0 && !economy.withdraw(player.getUniqueId(), jobs.rerollCost(), "EterMarket · métiers")) {
                 repository.releaseReroll(uuid, today);
                 return "quest.reroll-not-enough";
             }
@@ -221,7 +221,7 @@ public class JobService {
             Quest replacement = fromTemplate(quest.slot(), today, template);
             if (!repository.swapQuest(uuid, replacement)) {
                 if (jobs.rerollCost() > 0) {
-                    economy.depositPlayer(player, jobs.rerollCost());
+                    economy.deposit(player.getUniqueId(), jobs.rerollCost(), "EterMarket · métiers");
                 }
                 repository.releaseReroll(uuid, today);
                 return "quest.reroll-done";

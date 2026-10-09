@@ -117,9 +117,9 @@ public class JobRepository {
         database.createTable(MEMBERS,
                 Column.of("uuid", Column.Type.UUID).primaryKey(),
                 Column.of("job", Column.Type.STRING).length(32).notNull(),
-                Column.of("changed_at", Column.Type.LONG).notNull());
-        database.addColumn(MEMBERS, Column.of("completed", Column.Type.INT));
-        database.addColumn(MEMBERS, Column.of("reroll_day", Column.Type.LONG));
+                Column.of("changed_at", Column.Type.LONG).notNull(),
+                Column.of("completed", Column.Type.INT),
+                Column.of("reroll_day", Column.Type.LONG));
         database.createTable(TEMPLATES,
                 Column.of("id", Column.Type.LONG).autoIncrement(),
                 Column.of("job", Column.Type.STRING).length(32).notNull(),
@@ -134,12 +134,11 @@ public class JobRepository {
                 Column.of("objectives", Column.Type.STRING).length(512).notNull(),
                 Column.of("reward", Column.Type.DOUBLE).notNull(),
                 Column.of("progress", Column.Type.INT).notNull(),
+                Column.of("progress_2", Column.Type.INT),
+                Column.of("progress_3", Column.Type.INT),
                 Column.of("done", Column.Type.BOOLEAN).notNull(),
                 Column.of("tracked", Column.Type.BOOLEAN).notNull());
         database.createTable(SEEDED, Column.of("job", Column.Type.STRING).length(32).primaryKey());
-        PROGRESS.stream().skip(1).forEach(column -> database.addColumn(DAILY, Column.of(column, Column.Type.INT)));
-        // Tables de la 1.2, remplacées par job_templates et job_daily (pas de table morte dans la base)
-        database.execute("DROP TABLE IF EXISTS " + database.table("job_catalog") + ", " + database.table("job_quests"));
     }
 
     // ---------- Membres ----------

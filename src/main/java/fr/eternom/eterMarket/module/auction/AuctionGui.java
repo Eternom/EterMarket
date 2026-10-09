@@ -13,7 +13,7 @@ import io.papermc.paper.registry.data.dialog.DialogBase;
 import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import io.papermc.paper.registry.data.dialog.input.DialogInput;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import net.milkbowl.vault.economy.Economy;
+import fr.eternom.eterEconomy.api.EconomyApi;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -50,13 +50,13 @@ public class AuctionGui {
     }
 
     void open(Player player, int page, String filter) {
-        Economy economy = Money.economy();
+        EconomyApi economy = EconomyApi.get().orElse(null);
         int limit = service.listingLimit(player);
         Tasks.async(plugin, player, () -> {
             List<Listing> listings = repository.active().stream()
                     .filter(listing -> filter == null || matches(listing.item(), filter))
                     .toList();
-            return new Browse(listings, filter, economy == null ? 0 : economy.getBalance(player),
+            return new Browse(listings, filter, economy == null ? 0 : economy.balance(player.getUniqueId()),
                     repository.countBySeller(player.getUniqueId()), limit, repository.countCollection(player.getUniqueId()));
         }, browse -> player.openInventory(new AuctionMenu(this, player, browse, page).getInventory()),
                 () -> messages.send(player, "error.generic"));

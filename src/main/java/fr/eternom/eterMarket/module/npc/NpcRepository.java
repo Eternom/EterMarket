@@ -67,7 +67,6 @@ public class NpcRepository {
                 Column.of("role", Column.Type.STRING).length(16).notNull(),
                 Column.of("use_stock", Column.Type.BOOLEAN).notNull(),
                 Column.of("job", Column.Type.STRING).length(32));
-        database.addColumn(NPCS, Column.of("job", Column.Type.STRING).length(32)); // ajoutée en 1.1.0
         database.createTable(PLACEMENTS,
                 Column.of("id", Column.Type.LONG).autoIncrement(),
                 Column.of("npc", Column.Type.STRING).length(32).notNull(),

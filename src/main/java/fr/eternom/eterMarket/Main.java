@@ -21,6 +21,9 @@ import fr.eternom.eterMarket.module.shop.ShopGui;
 import fr.eternom.eterMarket.module.shop.ShopRepository;
 import fr.eternom.eterMarket.module.shop.ShopService;
 import fr.eternom.eterMarket.module.stock.StockRepository;
+import fr.eternom.eterMarket.api.MarketApi;
+import fr.eternom.eterMarket.module.market.MarketApiService;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.time.DateTimeException;
@@ -34,7 +37,7 @@ import java.time.ZoneId;
 public final class Main extends JavaPlugin {
 
     /** Version minimale d'EterLib : étiquettes du joueur (getPlayerTags) depuis 1.7.0. */
-    private static final String REQUIRED_ETERLIB = "1.8.0";
+    private static final String REQUIRED_ETERLIB = "1.10.0";
 
     /** Préfixe des tables d'EterMarket dans la base commune : etermarket_npcs, etermarket_stock... */
     private static final String TABLE_PREFIX = "etermarket_";
@@ -94,6 +97,10 @@ public final class Main extends JavaPlugin {
         auctions = new AuctionGui(this, auctionRepository, auctionService, messages,
                 lib.backButton(getConfig().getString("menus.auction.back-command", "")));
         auctionService.start();
+
+        // API pour les autres plugins (MarketApi.get())
+        getServer().getServicesManager().register(MarketApi.class, new MarketApiService(jobService, jobRepository, stock), this,
+                ServicePriority.Normal);
 
         new Commands(this);
         new Events(this);

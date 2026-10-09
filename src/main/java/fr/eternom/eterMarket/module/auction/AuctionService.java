@@ -7,7 +7,7 @@ import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.module.auction.AuctionRepository.Listing;
 import fr.eternom.eterMarket.module.auction.AuctionRepository.Parcel;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
-import net.milkbowl.vault.economy.Economy;
+import fr.eternom.eterEconomy.api.EconomyApi;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
@@ -16,8 +16,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -88,7 +86,7 @@ public class AuctionService {
 
     /** Thread principal : met en vente l'objet en main au prix donné. */
     public void sellHeld(Player player, double price, Runnable after) {
-        Economy economy = Money.economy();
+        EconomyApi economy = EconomyApi.get().orElse(null);
         if (economy == null) {
             messages.send(player, "economy.unavailable");
             return;
@@ -98,12 +96,12 @@ public class AuctionService {
             messages.send(player, "auction.hold-item");
             return;
         }
-        double rounded = round(price, economy.fractionalDigits());
+        double rounded = economy.round(price);
         if (rounded < settings.minPrice() || rounded > settings.maxPrice()) {
             messages.send(player, "auction.price-range", "min", economy.format(settings.minPrice()), "max", economy.format(settings.maxPrice()));
             return;
         }
-        double fee = settings.fee() > 0 ? Math.max(1, round(rounded * settings.fee(), economy.fractionalDigits())) : 0;
+        double fee = settings.fee() > 0 ? Math.max(1, economy.round(rounded * settings.fee())) : 0;
         int limit = listingLimit(player);
         UUID uuid = player.getUniqueId();
         String name = player.getName();
@@ -112,7 +110,7 @@ public class AuctionService {
             if (repository.countBySeller(uuid) >= limit) {
                 return Result.LIMIT;
             }
-            if (fee > 0 && !economy.withdrawPlayer(player, fee).transactionSuccess()) {
+            if (fee > 0 && !economy.withdraw(player.getUniqueId(), fee, "EterMarket · enchères")) {
                 return Result.NOT_ENOUGH;
             }
             long now = System.currentTimeMillis();
@@ -139,7 +137,7 @@ public class AuctionService {
 
     /** Thread principal : achète une annonce. */
     public void buy(Player player, Listing listing, Runnable after) {
-        Economy economy = Money.economy();
+        EconomyApi economy = EconomyApi.get().orElse(null);
         if (economy == null) {
             messages.send(player, "economy.unavailable");
             return;
@@ -148,16 +146,16 @@ public class AuctionService {
             messages.send(player, "auction.own-listing");
             return;
         }
-        double toSeller = round(listing.price() * (1 - settings.tax()), economy.fractionalDigits());
+        double toSeller = economy.round(listing.price() * (1 - settings.tax()));
         Tasks.async(plugin, player, () -> {
-            if (!economy.withdrawPlayer(player, listing.price()).transactionSuccess()) {
+            if (!economy.withdraw(player.getUniqueId(), listing.price(), "EterMarket · enchères")) {
                 return Result.NOT_ENOUGH;
             }
             if (!repository.claim(listing.id())) {
-                economy.depositPlayer(player, listing.price()); // quelqu'un l'a eue avant : remboursé
+                economy.deposit(player.getUniqueId(), listing.price(), "EterMarket · enchères"); // quelqu'un l'a eue avant : remboursé
                 return Result.GONE;
             }
-            economy.depositPlayer(Bukkit.getOfflinePlayer(listing.seller()), toSeller);
+            economy.deposit(listing.seller(), toSeller, "EterMarket · enchères");
             return Result.OK;
         }, result -> {
             switch (result) {
@@ -232,13 +230,6 @@ public class AuctionService {
         Inventory copy = Bukkit.createInventory(null, 36);
         copy.setContents(player.getInventory().getStorageContents());
         return copy.addItem(item.clone()).isEmpty();
-    }
-
-    private static double round(double amount, int digits) {
-        if (!Double.isFinite(amount)) {
-            return -1;
-        }
-        return BigDecimal.valueOf(amount).setScale(Math.max(0, digits), RoundingMode.HALF_UP).doubleValue();
     }
 
 }

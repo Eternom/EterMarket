@@ -15,7 +15,7 @@ import fr.eternom.eterMarket.module.stock.StockRepository;
 import io.papermc.paper.registry.data.dialog.DialogBase;
 import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import io.papermc.paper.registry.data.dialog.input.DialogInput;
-import net.milkbowl.vault.economy.Economy;
+import fr.eternom.eterEconomy.api.EconomyApi;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -79,7 +79,7 @@ public class ShopGui {
             messages.send(player, "npc.unknown", "npc", npcId);
             return;
         }
-        Economy economy = Money.economy();
+        EconomyApi economy = EconomyApi.get().orElse(null);
         Tasks.async(plugin, player, () -> {
             List<ShopItem> items = shops.items(npcId);
             Map<Material, Long> amounts = new HashMap<>();
@@ -92,7 +92,7 @@ public class ShopGui {
             if (editor) {
                 jobs.catalog().forEach(template -> template.unitRewards().forEach((material, reward) -> bestReward.merge(material, reward, Math::max)));
             }
-            return new View(npc, items, amounts, economy == null ? 0 : economy.getBalance(player), bestReward);
+            return new View(npc, items, amounts, economy == null ? 0 : economy.balance(player.getUniqueId()), bestReward);
         }, then, () -> messages.send(player, "error.generic"));
     }
 

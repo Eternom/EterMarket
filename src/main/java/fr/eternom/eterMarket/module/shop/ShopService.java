@@ -6,7 +6,7 @@ import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Npc;
 import fr.eternom.eterMarket.module.shop.ShopRepository.ShopItem;
 import fr.eternom.eterMarket.module.stock.StockRepository;
-import net.milkbowl.vault.economy.Economy;
+import fr.eternom.eterEconomy.api.EconomyApi;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -39,7 +39,7 @@ public class ShopService {
 
     /** Thread principal. lots : nombre de lots achetés (un lot = l'objet de la boutique avec sa quantité). */
     public void buy(Player player, Npc npc, ShopItem item, int lots, Runnable after) {
-        Economy economy = Money.economy();
+        EconomyApi economy = EconomyApi.get().orElse(null);
         if (economy == null) {
             messages.send(player, "economy.unavailable");
             return;
@@ -57,7 +57,7 @@ public class ShopService {
             if (fromStock && !stock.take(material, units)) {
                 return Result.NO_STOCK;
             }
-            if (!economy.withdrawPlayer(player, total).transactionSuccess()) {
+            if (!economy.withdraw(player.getUniqueId(), total, "EterMarket · boutique")) {
                 if (fromStock) {
                     stock.add(material, units); // paiement refusé : le stock est rendu
                 }

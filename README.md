@@ -7,9 +7,9 @@ Document développeur, à tenir à jour avec le code.
 
 ## Prérequis
 
-- **EterLib 1.8.0+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes de la sidebar.
+- **EterLib 1.10.0+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes de la sidebar.
 - **EterTab** (facultatif) : affiche la quête suivie et le métier (`<tag_job>`) dans la sidebar.
-- **Vault + EterEconomy** pour payer (sinon : « économie indisponible »).
+- **EterEconomy 2.2.1+** (son API `EconomyApi`) pour payer (sinon : « économie indisponible »).
 - Client 1.21.6+ pour les Dialogs (quantité, éditeur).
 
 ## PNJ (`module/npc`)
@@ -39,7 +39,7 @@ Chaque PNJ vend **sa propre liste** (`etermarket_shop_items` : l'objet exact sé
 le prix du lot). **Les boutiques ne rachètent rien** : l'argent entre par les quêtes des métiers.
 
 **Achat** (`ShopService`) : place dans l'inventaire vérifiée sur une copie (sinon refus) → stock commun retiré si la
-boutique vend sur stock (atomique) → paiement par Vault (atomique) ; paiement refusé = stock rendu. Les objets ne sont
+boutique vend sur stock (atomique) → paiement par EterEconomy (atomique) ; paiement refusé = stock rendu. Les objets ne sont
 donnés qu'à la fin. Clic gauche : un lot ; clic droit : quantité choisie dans un Dialog (1 à 64 lots).
 
 **Éditeur** (`ShopEditorMenu`, cadre rouge ; `/market edit <pnj>` ou Maj + clic droit, `etermarket.edit`) : ajouter
@@ -86,7 +86,7 @@ jour).
 
 **Valider** (`JobService#deliver`, clic gauche) : action accomplie et objets présents (simples, sans nom ni
 enchantement) → objets retirés → la base marque la quête faite **une seule fois** (`UPDATE ... WHERE done = FALSE AND
-progress >= cible`) → objets versés dans le **stock commun** → récompense par Vault. Refus (double clic, autre
+progress >= cible`) → objets versés dans le **stock commun** → récompense par EterEconomy. Refus (double clic, autre
 serveur) : objets rendus.
 
 **Le PNJ de métier** ouvre la guilde (rejoindre) ou les quêtes du jour ; un onglet mène à sa **boutique** (outils et objets utiles
@@ -139,3 +139,14 @@ jamais (il est entre joueurs).
 
 `/market` : `etermarket.admin` (op). Éditeur au clic : `etermarket.edit` (dans `etermarket.admin`).
 Pas de `/shop` : les joueurs vont voir les PNJ.
+
+## API (pour les autres plugins)
+
+`fr.eternom.eterMarket.api.MarketApi` (`MarketApi.get()`) : personne d'autre ne lit les tables `etermarket_*`.
+
+- `jobs()`, `jobName(lecteur, métier)`, `job(uuid)` : le métier d'un joueur (bloquant) — utilisé par EterResource pour
+  les bonus de métier ;
+- `stock(matière)`, `addStock(matière, n)`, `takeStock(matière, n)` : le stock commun (bloquant), pour les futurs
+  apports (travail des prisonniers...).
+
+L'argent passe par l'API d'EterEconomy, avec sa source : « EterMarket · boutique », « · enchères », « · métiers ».
