@@ -1,5 +1,7 @@
 package fr.eternom.eterMarket.module.job;
 
+import fr.eternom.eterMarket.api.JobQuestCompleteEvent;
+import org.bukkit.Bukkit;
 import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
@@ -161,14 +163,14 @@ public class JobService {
         Tasks.async(plugin, player, () -> {
             progress.flush(uuid);
             if (!repository.complete(uuid, quest.slot(), quest.day(), quest.targets())) {
-                return false;
+                return null;
             }
             items.forEach(item -> stock.add(item.material(), item.amount()));
             economy.deposit(player.getUniqueId(), quest.reward(), "EterMarket · métiers");
             repository.addCompleted(uuid);
-            return true;
-        }, completed -> {
-            if (!completed) {
+            return repository.member(uuid).map(JobRepository.Member::job).orElse("");
+        }, job -> {
+            if (job == null) {
                 giveBack(player, items); // déjà validée (double clic, autre serveur)
                 messages.send(player, "quest.already-done");
                 return;
@@ -176,6 +178,8 @@ public class JobService {
             progress.markDone(player, quest);
             messages.send(player, quest.slot() == Jobs.BONUS_SLOT ? "quest.bonus-done" : "quest.done",
                     "reward", economy.format(quest.reward()));
+            // Pour les autres plugins (pass d'EterReward...) : une quête vient d'être validée, une seule fois
+            Bukkit.getPluginManager().callEvent(new JobQuestCompleteEvent(player, job, quest.tier().id(), quest.slot() == Jobs.BONUS_SLOT));
             player.playSound(player, Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.3f);
             after.run();
         }, () -> {

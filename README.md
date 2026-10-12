@@ -148,5 +148,7 @@ Pas de `/shop` : les joueurs vont voir les PNJ.
   les bonus de métier ;
 - `stock(matière)`, `addStock(matière, n)`, `takeStock(matière, n)` : le stock commun (bloquant), pour les futurs
   apports (travail des prisonniers...).
+- événement `JobQuestCompleteEvent` (joueur, métier, difficulté `easy`/`normal`/`hard`, quête bonus) : lancé une fois
+  par quête validée, après l'enregistrement et le paiement — l'XP du pass d'EterReward l'écoute.
 
 L'argent passe par l'API d'EterEconomy, avec sa source : « EterMarket · boutique », « · enchères », « · métiers ».
