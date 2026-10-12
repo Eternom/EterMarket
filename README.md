@@ -115,7 +115,8 @@ récupération). Chaque sortie d'une annonce passe par un `DELETE ... WHERE id =
   vendeur (tâche chaque minute, sur chaque serveur, sans doublon grâce au `DELETE`).
 - **Boîte de récupération** : invendus, annonces retirées, achats sans place. Un colis ne se prend que s'il rentre.
   **Joueur parti pendant l'opération** (EterLib `Tasks` avec `offline`) : l'objet acheté, retiré, refusé à la vente ou
-  sorti de la boîte y est remis (raison `returned`) au lieu d'être perdu ; un achat en boutique est remboursé (et le
+  sorti de la boîte, comme les objets d'une quête refusée (déjà validée ailleurs), y est remis (raison `returned`) au
+  lieu d'être perdu ; un achat en boutique est remboursé (et le
   stock rendu).
 - **Recherche** par nom d'objet ou de matière ; clic droit sur la loupe pour l'effacer.
 
@@ -154,5 +155,6 @@ Pas de `/shop` : les joueurs vont voir les PNJ.
 - `topQuests(n)`, `questRank(uuid)` : classement des quêtes validées (bloquants), pour `/classement` d'EterReward ;
 - événement `JobQuestCompleteEvent` (joueur, métier, difficulté `easy`/`normal`/`hard`, quête bonus) : lancé une fois
   par quête validée, après l'enregistrement et le paiement — l'XP du pass d'EterReward l'écoute.
+- événement `AuctionSaleEvent` (acheteur, vendeur, objet, prix) : une annonce achetée, une seule fois (succès d'EterSuccess) ;
 
 L'argent passe par l'API d'EterEconomy, avec sa source : « EterMarket · boutique », « · enchères », « · métiers ».

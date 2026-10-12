@@ -4,6 +4,7 @@ import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.helper.cache.NetworkBus;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
+import fr.eternom.eterMarket.api.AuctionSaleEvent;
 import fr.eternom.eterMarket.module.auction.AuctionRepository.Listing;
 import fr.eternom.eterMarket.module.auction.AuctionRepository.Parcel;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -168,6 +169,7 @@ public class AuctionService {
                     messages.send(player, "auction.bought", "price", economy.format(listing.price()), "seller", listing.sellerName());
                     player.playSound(player, Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.6f, 1.2f);
                     notifySold(listing.seller(), itemName(listing.item()), economy.format(toSeller));
+                    Bukkit.getPluginManager().callEvent(new AuctionSaleEvent(player.getUniqueId(), listing.seller(), listing.item(), listing.price()));
                 }
                 case NOT_ENOUGH -> messages.send(player, "auction.not-enough", "price", economy.format(listing.price()));
                 default -> messages.send(player, "auction.gone");
@@ -177,6 +179,7 @@ public class AuctionService {
             if (result == Result.OK) {
                 keep(player.getUniqueId(), listing.item(), "bought"); // payé, mais parti : l'objet attend dans sa boîte
                 notifySold(listing.seller(), itemName(listing.item()), economy.format(toSeller));
+                Bukkit.getPluginManager().callEvent(new AuctionSaleEvent(player.getUniqueId(), listing.seller(), listing.item(), listing.price()));
             }
         });
     }

@@ -94,6 +94,7 @@ public final class Main extends JavaPlugin {
 
         AuctionRepository auctionRepository = new AuctionRepository(database);
         AuctionService auctionService = new AuctionService(this, auctionRepository, auctionSettings(), bus, messages);
+        jobService.setKeep((uuid, item) -> auctionRepository.deposit(uuid, item, "returned"));
         auctions = new AuctionGui(this, auctionRepository, auctionService, messages,
                 lib.backButton(getConfig().getString("menus.auction.back-command", "")));
         auctionService.start();

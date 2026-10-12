@@ -80,8 +80,7 @@ class JobQuestMenu implements Menu {
                 gui.toggleTrack(player, npc, board, quest);
             } else {
                 Sounds.click(player);
-                player.closeInventory();
-                gui.deliver(player, npc, quest);
+                gui.deliver(player, npc, quest); // le menu reste ouvert : rouvert à jour si c'est validé, inchangé sinon
             }
         } else if (slot == SHOP) {
             Sounds.page(player);

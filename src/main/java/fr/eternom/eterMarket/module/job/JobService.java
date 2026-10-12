@@ -64,6 +64,12 @@ public class JobService {
     private final ZoneId zone;
     private final QuestTexts texts;
     private final JobProgress progress;
+    /** Met un objet de côté pour un joueur parti (la boîte de récupération de l'hôtel des ventes). Bloquant. */
+    private java.util.function.BiConsumer<UUID, ItemStack> keep = (uuid, item) -> { };
+
+    public void setKeep(java.util.function.BiConsumer<UUID, ItemStack> keep) {
+        this.keep = keep;
+    }
 
     public JobService(JavaPlugin plugin, JobRepository repository, StockRepository stock, Jobs jobs, Messages messages, ZoneId zone) {
         this.plugin = plugin;
@@ -185,6 +191,14 @@ public class JobService {
         }, () -> {
             giveBack(player, items);
             messages.send(player, "error.generic");
+        }, job -> {
+            if (job == null) {
+                // Pas validée, et le joueur est parti : ses objets attendent dans sa boîte de récupération
+                Tasks.async(plugin, () -> stacks(items).forEach(stack -> keep.accept(uuid, stack)),
+                        "Objets de quête non rendus à " + uuid);
+            } else {
+                Bukkit.getPluginManager().callEvent(new JobQuestCompleteEvent(player, job, quest.tier().id(), quest.slot() == Jobs.BONUS_SLOT));
+            }
         });
     }
 
@@ -349,6 +363,20 @@ public class JobService {
             }
         }
         inventory.setStorageContents(contents);
+    }
+
+    /** Les objets d'une quête en piles normales. */
+    private static List<ItemStack> stacks(List<Objective> items) {
+        List<ItemStack> stacks = new java.util.ArrayList<>();
+        for (Objective item : items) {
+            int remaining = item.amount();
+            while (remaining > 0) {
+                int size = Math.min(remaining, item.material().getMaxStackSize());
+                stacks.add(ItemStack.of(item.material(), size));
+                remaining -= size;
+            }
+        }
+        return stacks;
     }
 
     private static void giveBack(Player player, List<Objective> items) {
