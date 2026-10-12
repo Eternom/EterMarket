@@ -18,6 +18,16 @@ public class MarketApiService implements MarketApi {
     private final JobRepository jobRepository;
     private final StockRepository stock;
 
+    @Override
+    public List<Ranked> topQuests(int limit) {
+        return jobRepository.topCompleted(limit);
+    }
+
+    @Override
+    public int questRank(UUID player) {
+        return jobRepository.completedRank(player);
+    }
+
     public MarketApiService(JobService jobs, JobRepository jobRepository, StockRepository stock) {
         this.jobs = jobs;
         this.jobRepository = jobRepository;

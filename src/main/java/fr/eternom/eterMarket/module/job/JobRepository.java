@@ -156,6 +156,24 @@ public class JobRepository {
         database.delete(DAILY, Map.of("uuid", player));
     }
 
+    /** Classement des quêtes validées (total de chaque joueur). */
+    public List<fr.eternom.eterMarket.api.MarketApi.Ranked> topCompleted(int limit) {
+        return database.query("SELECT uuid, completed FROM " + database.table(MEMBERS)
+                        + " WHERE completed > 0 ORDER BY completed DESC LIMIT ?", limit).stream()
+                .map(row -> new fr.eternom.eterMarket.api.MarketApi.Ranked(row.getUUID("uuid"), row.getLong("completed")))
+                .toList();
+    }
+
+    /** Place du joueur (1 = premier), 0 s'il n'a jamais validé de quête. */
+    public int completedRank(UUID player) {
+        int mine = member(player).map(Member::completed).orElse(0);
+        if (mine <= 0) {
+            return 0;
+        }
+        return (int) database.query("SELECT COUNT(*) AS above FROM " + database.table(MEMBERS) + " WHERE completed > ?", mine)
+                .getFirst().getLong("above") + 1;
+    }
+
     public void addCompleted(UUID player) {
         database.execute("UPDATE " + database.table(MEMBERS) + " SET completed = COALESCE(completed, 0) + 1 WHERE uuid = ?", player);
     }

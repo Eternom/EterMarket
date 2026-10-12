@@ -41,4 +41,14 @@ public interface MarketApi {
 
     /** Retire du stock commun s'il y en a assez (une seule requête conditionnelle) ; false sinon. Bloquant (base). */
     boolean takeStock(Material material, long amount);
+
+    /** Un joueur et sa valeur dans un classement. */
+    record Ranked(UUID player, long value) {
+    }
+
+    /** Les joueurs qui ont validé le plus de quêtes de métier, du premier au dernier. Bloquant (base). */
+    List<Ranked> topQuests(int limit);
+
+    /** Place du joueur dans ce classement (1 = premier), 0 s'il n'a jamais validé de quête. Bloquant (base). */
+    int questRank(UUID player);
 }
