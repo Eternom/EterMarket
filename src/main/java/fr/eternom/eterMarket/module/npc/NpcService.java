@@ -7,59 +7,101 @@ import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Npc;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Placement;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Role;
+import fr.eternom.eterNpc.api.NpcApi;
+import fr.eternom.eterNpc.api.NpcLook;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 /**
- * Gestion des PNJ par le staff : créer une définition, la placer ici, retirer un emplacement, modifier nom, skin et
- * vente sur stock, supprimer. Une définition modifiée sur un serveur est rechargée par les autres (bus réseau
- * d'EterMarket, message "reload").
+ * Les PNJ d'EterMarket : leurs définitions (nom, skin, rôle, vente sur stock) sont ici ; EterNpc les fait apparaître
+ * et garde leurs emplacements (identifiant « etermarket:<pnj> »). Une définition modifiée sur un serveur est rechargée
+ * par les autres (bus réseau d'EterMarket, message "reload").
  */
 public class NpcService {
 
     private static final String RELOAD = "reload";
+    private static final String PREFIX = "etermarket:";
     private static final Pattern ID = Pattern.compile("[a-z0-9_-]{1,32}");
     /** Distance max pour retirer le PNJ le plus proche. */
     private static final double REMOVE_RADIUS = 5;
 
     private final JavaPlugin plugin;
     private final NpcRepository repository;
-    private final NpcSpawner spawner;
+    private final NpcApi api;
     private final NetworkBus bus;
     private final Messages messages;
-    /** Clé des emplacements de ce serveur : son nom, ou NpcRepository.LOBBIES sur un lobby (communs à tous les lobbys). */
-    private final String serverName;
+    private final Map<String, Npc> npcs = new ConcurrentHashMap<>();
 
-    public NpcService(JavaPlugin plugin, NpcRepository repository, NpcSpawner spawner, NetworkBus bus,
-                      Messages messages, String serverName) {
+    public NpcService(JavaPlugin plugin, NpcRepository repository, NpcApi api, NetworkBus bus, Messages messages) {
         this.plugin = plugin;
         this.repository = repository;
-        this.spawner = spawner;
+        this.api = api;
         this.bus = bus;
         this.messages = messages;
-        this.serverName = serverName;
     }
 
-    /** Démarrage : abonnement aux rechargements des autres serveurs, puis premier chargement. */
+    /** Démarrage : reprise des anciens emplacements, abonnement aux rechargements des autres serveurs, premier chargement. */
     public void start() {
-        spawner.start();
         bus.on(RELOAD, data -> reload()); // le serveur d'origine a déjà appliqué sa propre modification
+        Tasks.async(plugin, this::migratePlacements, "Emplacements d'EterMarket non repris par EterNpc");
         reload();
     }
 
-    /** Relit définitions et emplacements de ce serveur, puis fait réapparaître les PNJ. */
+    /**
+     * Avant EterNpc, les emplacements étaient dans etermarket_placements : chacun passe à EterNpc une seule fois (la
+     * ligne n'est copiée que par le serveur qui a pu la supprimer), avec le même serveur ou « tous les lobbys ».
+     */
+    private void migratePlacements() {
+        int moved = 0;
+        for (Placement placement : repository.oldPlacements()) {
+            if (repository.takeOldPlacement(placement.id())) {
+                api.importPlacement(PREFIX + placement.npc(), placement.server(), placement.world(),
+                        placement.x(), placement.y(), placement.z(), placement.yaw());
+                moved++;
+            }
+        }
+        if (moved > 0) {
+            plugin.getLogger().info(moved + " emplacement(s) de PNJ repris par EterNpc");
+        }
+    }
+
+    /** Relit les définitions, et les donne à EterNpc. */
     public void reload() {
         Tasks.async(plugin, () -> {
-            List<Npc> npcs = repository.all();
-            List<Placement> placements = repository.placements(serverName);
-            Bukkit.getScheduler().runTask(plugin, () -> spawner.load(npcs, placements));
+            List<Npc> all = repository.all();
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                npcs.keySet().stream().filter(id -> all.stream().noneMatch(npc -> npc.id().equals(id))).toList()
+                        .forEach(id -> {
+                            npcs.remove(id);
+                            api.undefine(PREFIX + id);
+                        });
+                all.forEach(this::show);
+            });
         }, "PNJ d'EterMarket illisibles");
+    }
+
+    public Optional<Npc> npc(String id) {
+        return Optional.ofNullable(npcs.get(id));
+    }
+
+    public List<String> ids() {
+        return npcs.keySet().stream().sorted().toList();
+    }
+
+    /** Le PNJ d'EterMarket derrière un identifiant d'EterNpc (« etermarket:<pnj> »). */
+    public Optional<Npc> fromNpcId(String npcId) {
+        return npcId.startsWith(PREFIX) ? npc(npcId.substring(PREFIX.length())) : Optional.empty();
     }
 
     /**
@@ -90,38 +132,25 @@ public class NpcService {
 
     /** Place le PNJ là où se trouve le staff, en regardant dans la même direction. */
     public void place(Player admin, String id) {
-        if (spawner.npc(id).isEmpty()) {
+        if (!npcs.containsKey(id)) {
             messages.send(admin, "npc.unknown", "npc", id);
             return;
         }
-        Location at = admin.getLocation();
-        String world = at.getWorld().getName();
-        Tasks.async(plugin, admin, () -> repository.place(id, serverName, world, at.getX(), at.getY(), at.getZ(), at.getYaw()),
-                placementId -> {
-                    spawner.addPlacement(new Placement(placementId, id, serverName, world, at.getX(), at.getY(), at.getZ(), at.getYaw()));
-                    messages.send(admin, "npc.placed", "npc", id);
-                    changed(); // sur un lobby : les autres lobbys l'affichent aussi
-                }, () -> messages.send(admin, "error.generic"));
+        api.place(PREFIX + id, admin.getLocation(), () -> messages.send(admin, "npc.placed", "npc", id));
     }
 
     /** Retire l'emplacement le plus proche (la définition reste, ainsi que ses autres emplacements). */
     public void removeNearest(Player admin) {
-        spawner.nearest(admin.getLocation(), REMOVE_RADIUS).ifPresentOrElse(placement ->
-                Tasks.async(plugin, admin, () -> {
-                    repository.removePlacement(placement.id());
-                    return placement;
-                }, removed -> {
-                    spawner.removePlacement(removed.id());
-                    messages.send(admin, "npc.removed", "npc", removed.npc());
-                    changed();
-                }, () -> messages.send(admin, "error.generic")),
-                () -> messages.send(admin, "npc.none-near", "radius", String.valueOf((int) REMOVE_RADIUS)));
+        api.removeNearest(admin.getLocation(), REMOVE_RADIUS, removed -> removed.ifPresentOrElse(
+                npcId -> messages.send(admin, "npc.removed", "npc", npcId.startsWith(PREFIX) ? npcId.substring(PREFIX.length()) : npcId),
+                () -> messages.send(admin, "npc.none-near", "radius", String.valueOf((int) REMOVE_RADIUS))));
     }
 
     /** Supprime la définition, tous ses emplacements et sa boutique, sur tout le réseau. */
     public void delete(CommandSender sender, String id, Runnable alsoDelete) {
         Tasks.async(plugin, () -> {
             repository.delete(id);
+            api.deletePlacements(PREFIX + id);
             alsoDelete.run();
             Bukkit.getScheduler().runTask(plugin, () -> {
                 messages.send(sender, "npc.deleted", "npc", id);
@@ -133,15 +162,22 @@ public class NpcService {
 
     /** Enregistre une définition modifiée (éditeur) : mise à jour ici tout de suite, puis sur les autres serveurs. */
     public void save(Npc npc) {
-        spawner.update(npc);
+        show(npc);
         Tasks.async(plugin, () -> {
             repository.save(npc);
             changed();
         }, "PNJ " + npc.id() + " non enregistré");
     }
 
-    public NpcSpawner spawner() {
-        return spawner;
+    /** Apparence donnée à EterNpc : nom, rôle (ou métier) sous le nom, skin. */
+    private void show(Npc npc) {
+        npcs.put(npc.id(), npc);
+        CommandSender console = Bukkit.getConsoleSender();
+        Component description = npc.role() == Role.JOB
+                ? messages.get(console, "npc.role.job", "job", messages.plain(console, "job.name." + npc.job()))
+                : messages.get(console, "npc.role." + npc.role().name().toLowerCase(Locale.ROOT));
+        api.define(plugin, new NpcLook(PREFIX + npc.id(), messages.render(npc.name(), TagResolver.empty()), description, npc.skin(),
+                npc.texture() == null ? null : new NpcLook.Texture(npc.texture().value(), npc.texture().signature())));
     }
 
     /** Prévient les autres serveurs qu'une définition a changé. */

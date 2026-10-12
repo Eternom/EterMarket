@@ -8,6 +8,7 @@ Document développeur, à tenir à jour avec le code.
 ## Prérequis
 
 - **EterLib 1.12.1+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes de la sidebar.
+- **EterNpc 1.0.0+** (`depend`) : les PNJ (Mannequins, emplacements, clics).
 - **EterTab** (facultatif) : affiche la quête suivie et le métier (`<tag_job>`) dans la sidebar.
 - **EterEconomy 2.2.2+** (son API `EconomyApi`) pour payer (sinon : « économie indisponible »).
 - Client 1.21.6+ pour les Dialogs (quantité, éditeur).
@@ -15,19 +16,13 @@ Document développeur, à tenir à jour avec le code.
 ## PNJ (`module/npc`)
 
 **Définis une fois, placés partout.** `etermarket_npcs` : la définition (identifiant, nom MiniMessage, skin, rôle,
-vente sur stock), commune à tout le réseau. `etermarket_placements` : chaque emplacement (serveur, monde, position).
-Un même PNJ peut être placé autant de fois qu'on veut, sur n'importe quel serveur. **Sur un lobby** (EterHub installé), l'emplacement
-est enregistré sous `@lobbies` et vaut pour **tous les lobbys**, même ceux créés plus tard par l'orchestrateur (nom
-neuf) ; au démarrage, un lobby passe ses anciens emplacements (à son nom) en `@lobbies`. Placer ou retirer prévient
-les autres serveurs (rechargement).
+vente sur stock), commune à tout le réseau. **L'apparition, le regard et les emplacements sont à EterNpc** (`NpcApi`) :
+`NpcService` donne à EterNpc l'apparence de chaque PNJ (`etermarket:<pnj>`, rôle ou métier sous le nom) à chaque
+chargement et répond à ses clics (`NpcListener` sur `NpcClickEvent`). `/market place` et `/market remove` passent par
+EterNpc ; un emplacement posé sur un lobby vaut pour tous les lobbys (voir EterNpc).
 
-**Mannequins natifs** (`NpcSpawner`), pas de Citizens : skin par pseudo (résolu par le jeu) ou texture précise
-(valeur + signature, ex : MineSkin, prioritaire) ; invulnérables, immobiles, silencieux. Tout dégât et tout feu sont annulés
-(`NpcListener`, même en créatif), et un PNJ disparu quand même réapparaît (vérifié toutes les 5 s). Tête et corps
-tournés vers le joueur le plus proche (8 blocs, tous les 2 ticks), sans bouger ; sinon, la direction de l'emplacement. **Jamais enregistrés dans le
-monde** (non persistants) : ils apparaissent au chargement du chunk de leur emplacement et disparaissent avec lui,
-donc jamais de doublon après un redémarrage. Chaque Mannequin porte l'identifiant de son PNJ (données persistantes de
-l'entité) pour reconnaître un clic.
+**Reprise** (1.8.0) : les anciens emplacements de `etermarket_placements` passent à EterNpc au premier démarrage, chacun
+une seule fois (seul le serveur qui a pu supprimer la ligne la copie), avec le même serveur ou `@lobbies`.
 
 **Synchronisation** : une définition modifiée sur un serveur (éditeur, création, suppression) est rechargée par les
 autres via le bus réseau d'EterLib (canal `etermarket`, message `reload`, ignoré par l'émetteur). Redis en panne :

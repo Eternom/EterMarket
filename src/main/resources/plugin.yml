@@ -6,7 +6,7 @@ api-version: '26.2'
 load: POSTWORLD
 authors: [ NadTum ]
 description: Marché du réseau (PNJ boutiques, guilde des métiers et ses quêtes, stock commun, hôtel des ventes).
-depend: [EterLib, EterEconomy]
+depend: [EterLib, EterEconomy, EterNpc]
 
 commands:
   market:

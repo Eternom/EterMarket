@@ -16,7 +16,7 @@ import fr.eternom.eterMarket.module.job.JobService;
 import fr.eternom.eterMarket.module.job.Jobs;
 import fr.eternom.eterMarket.module.npc.NpcRepository;
 import fr.eternom.eterMarket.module.npc.NpcService;
-import fr.eternom.eterMarket.module.npc.NpcSpawner;
+import fr.eternom.eterNpc.api.NpcApi;
 import fr.eternom.eterMarket.module.shop.ShopGui;
 import fr.eternom.eterMarket.module.shop.ShopRepository;
 import fr.eternom.eterMarket.module.shop.ShopService;
@@ -44,7 +44,6 @@ public final class Main extends JavaPlugin {
 
     private Messages messages;
     private NpcService npcs;
-    private NpcSpawner spawner;
     private ShopRepository shopRepository;
     private ShopGui shops;
     private JobGui jobGui;
@@ -70,14 +69,8 @@ public final class Main extends JavaPlugin {
         // Messages entre serveurs : rechargement des PNJ, « ton objet s'est vendu »
         NetworkBus bus = lib.network(this, "etermarket", messages);
 
-        spawner = new NpcSpawner(this, messages);
-        NpcRepository npcRepository = new NpcRepository(database);
-        // Un lobby (EterHub installé) partage ses PNJ avec tous les lobbys : ceux créés par l'orchestrateur ont un nom neuf
-        boolean lobby = getServer().getPluginManager().getPlugin("EterHub") != null;
-        if (lobby) {
-            npcRepository.shareWithLobbies(lib.getServerName());
-        }
-        npcs = new NpcService(this, npcRepository, spawner, bus, messages, lobby ? NpcRepository.LOBBIES : lib.getServerName());
+        // PNJ : définitions ici, apparition et emplacements chez EterNpc (un lobby y partage ses PNJ avec tous les lobbys)
+        npcs = new NpcService(this, new NpcRepository(database), NpcApi.get().orElseThrow(), bus, messages);
         StockRepository stock = new StockRepository(database);
         shopRepository = new ShopRepository(database);
         JobRepository jobRepository = new JobRepository(database);
@@ -114,9 +107,6 @@ public final class Main extends JavaPlugin {
         if (jobService != null) {
             jobService.progress().stop();
         }
-        if (spawner != null) {
-            spawner.despawnAll();
-        }
     }
 
     public Messages getMessages() {
@@ -125,10 +115,6 @@ public final class Main extends JavaPlugin {
 
     public NpcService getNpcs() {
         return npcs;
-    }
-
-    public NpcSpawner getSpawner() {
-        return spawner;
     }
 
     public ShopRepository getShopRepository() {

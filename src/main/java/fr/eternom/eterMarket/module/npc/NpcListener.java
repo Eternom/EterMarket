@@ -4,42 +4,32 @@ import fr.eternom.eterMarket.module.auction.AuctionGui;
 import fr.eternom.eterMarket.module.job.JobGui;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Role;
 import fr.eternom.eterMarket.module.shop.ShopGui;
+import fr.eternom.eterNpc.api.NpcClickEvent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityCombustEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.inventory.EquipmentSlot;
 
 /**
- * Clic droit sur un PNJ : sa boutique, la guilde de son métier (PNJ de métier) ou l'hôtel des ventes ; Maj + clic droit avec
- * etermarket.edit : son éditeur.
- * Chargement d'un chunk : ses PNJ apparaissent.
+ * Clic droit sur un PNJ d'EterMarket (EterNpc) : sa boutique, la guilde de son métier (PNJ de métier) ou l'hôtel des
+ * ventes ; Maj + clic droit avec etermarket.edit : son éditeur.
  */
 public class NpcListener implements Listener {
 
-    private final NpcSpawner spawner;
+    private final NpcService npcs;
     private final ShopGui shops;
     private final JobGui jobs;
     private final AuctionGui auctions;
 
-    public NpcListener(NpcSpawner spawner, ShopGui shops, JobGui jobs, AuctionGui auctions) {
-        this.spawner = spawner;
+    public NpcListener(NpcService npcs, ShopGui shops, JobGui jobs, AuctionGui auctions) {
+        this.npcs = npcs;
         this.shops = shops;
         this.jobs = jobs;
         this.auctions = auctions;
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onInteract(PlayerInteractEntityEvent event) {
-        spawner.npcOf(event.getRightClicked()).flatMap(spawner::npc).ifPresent(npc -> {
-            event.setCancelled(true);
-            if (event.getHand() != EquipmentSlot.HAND) {
-                return; // un seul clic, pas deux (main principale et seconde main)
-            }
+    @EventHandler
+    public void onClick(NpcClickEvent event) {
+        npcs.fromNpcId(event.getNpc()).ifPresent(npc -> {
             Player player = event.getPlayer();
             if (player.isSneaking() && player.hasPermission(ShopGui.EDIT_PERMISSION)) {
                 shops.openEditor(player, npc.id(), 0);
@@ -51,25 +41,5 @@ public class NpcListener implements Listener {
                 shops.open(player, npc.id(), 0);
             }
         });
-    }
-
-    /** Invincibles, même face à un joueur en créatif (setInvulnerable ne l'arrête pas) ni au feu. */
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onDamage(EntityDamageEvent event) {
-        if (spawner.npcOf(event.getEntity()).isPresent()) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onCombust(EntityCombustEvent event) {
-        if (spawner.npcOf(event.getEntity()).isPresent()) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler
-    public void onChunkLoad(ChunkLoadEvent event) {
-        spawner.onChunkLoad(event.getChunk());
     }
 }

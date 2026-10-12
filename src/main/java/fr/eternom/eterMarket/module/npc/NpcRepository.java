@@ -12,17 +12,14 @@ import java.util.Optional;
 /**
  * PNJ d'EterMarket, en base commune à tout le réseau :
  * - etermarket_npcs : la DÉFINITION d'un PNJ (nom, skin, rôle, vente sur stock), écrite une seule fois ;
- * - etermarket_placements : où il est placé (serveur, monde, position). Un même PNJ peut être placé autant de fois
- *   qu'on veut, sur n'importe quel serveur, sans rien redéfinir.
+ * - etermarket_placements : ANCIENS emplacements (avant EterNpc, qui les garde désormais) : repris une fois au
+ *   démarrage puis supprimés.
  * Appels bloquants : hors du thread principal.
  */
 public class NpcRepository {
 
     private static final String NPCS = "npcs";
     private static final String PLACEMENTS = "placements";
-    /** Serveur des emplacements posés sur un lobby (EterHub installé) : communs à tous les lobbys, même créés plus tard. */
-    public static final String LOBBIES = "@lobbies";
-
     /** Rôle d'un PNJ : boutique, PNJ de référence d'un métier (quêtes + boutique du métier), ou hôtel des ventes. */
     public enum Role { SHOP, JOB, AUCTION }
 
@@ -105,29 +102,19 @@ public class NpcRepository {
         database.set(NPCS, values, "id");
     }
 
-    /** Supprime le PNJ et tous ses emplacements, sur tous les serveurs. */
+    /** Supprime la définition du PNJ (ses emplacements sont chez EterNpc). */
     public void delete(String id) {
-        database.delete(PLACEMENTS, Map.of("npc", id));
         database.delete(NPCS, Map.of("id", id));
     }
 
-    public List<Placement> placements(String server) {
-        return database.get(PLACEMENTS, Map.of("server", server)).stream().map(NpcRepository::toPlacement).toList();
+    /** Anciens emplacements, à reprendre par EterNpc. */
+    public List<Placement> oldPlacements() {
+        return database.get(PLACEMENTS, Map.of()).stream().map(NpcRepository::toPlacement).toList();
     }
 
-    public long place(String npc, String server, String world, double x, double y, double z, float yaw) {
-        database.insert(PLACEMENTS, Map.of("npc", npc, "server", server, "world", world, "x", x, "y", y, "z", z, "yaw", yaw));
-        return database.query("SELECT MAX(id) AS id FROM " + database.table(PLACEMENTS) + " WHERE npc = ? AND server = ?", npc, server)
-                .getFirst().getLong("id");
-    }
-
-    /** Un lobby : ses emplacements enregistrés sous son propre nom (avant 1.3.4) deviennent communs à tous les lobbys. */
-    public void shareWithLobbies(String server) {
-        database.update(PLACEMENTS, Map.of("server", LOBBIES), Map.of("server", server));
-    }
-
-    public void removePlacement(long id) {
-        database.delete(PLACEMENTS, Map.of("id", id));
+    /** Supprime un ancien emplacement ; false si un autre serveur l'a déjà repris. */
+    public boolean takeOldPlacement(long id) {
+        return database.delete(PLACEMENTS, Map.of("id", id)) > 0;
     }
 
     private static Npc toNpc(Row row) {

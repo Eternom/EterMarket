@@ -52,7 +52,7 @@ public class MarketCommand implements TabExecutor {
         String id = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : null;
         switch (action) {
             case "list" -> {
-                List<String> ids = npcs.spawner().ids();
+                List<String> ids = npcs.ids();
                 messages.send(sender, ids.isEmpty() ? "npc.list-empty" : "npc.list", "npcs", String.join(", ", ids));
             }
             case "reload" -> {
@@ -102,8 +102,8 @@ public class MarketCommand implements TabExecutor {
             messages.send(sender, "catalog.reset-usage", "jobs", String.join(", ", jobs.icons().keySet()));
             return;
         }
-        List<String> jobNpcs = npcs.spawner().ids().stream()
-                .filter(npcId -> npcs.spawner().npc(npcId).filter(npc -> npc.role() == Role.JOB && job.equals(npc.job())).isPresent())
+        List<String> jobNpcs = npcs.ids().stream()
+                .filter(npcId -> npcs.npc(npcId).filter(npc -> npc.role() == Role.JOB && job.equals(npc.job())).isPresent())
                 .toList();
         Tasks.async(plugin, () -> {
             boolean reset = jobService.resetCatalog(job);
@@ -147,7 +147,7 @@ public class MarketCommand implements TabExecutor {
         }
         String action = args[0].toLowerCase(Locale.ROOT);
         if (args.length == 2 && List.of("place", "edit", "delete").contains(action)) {
-            return filter(npcs.spawner().ids().stream(), args[1]);
+            return filter(npcs.ids().stream(), args[1]);
         }
         if (args.length == 3 && action.equals("create")) {
             return filter(Stream.of("job", "auction"), args[2]);

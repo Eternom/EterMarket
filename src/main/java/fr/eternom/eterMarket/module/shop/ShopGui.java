@@ -74,7 +74,7 @@ public class ShopGui {
     }
 
     private void load(Player player, String npcId, boolean editor, Consumer<View> then) {
-        Npc npc = npcs.spawner().npc(npcId).orElse(null);
+        Npc npc = npcs.npc(npcId).orElse(null);
         if (npc == null) {
             messages.send(player, "npc.unknown", "npc", npcId);
             return;
