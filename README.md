@@ -7,7 +7,7 @@ Document développeur, à tenir à jour avec le code.
 
 ## Prérequis
 
-- **EterLib 1.10.0+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes de la sidebar.
+- **EterLib 1.12.1+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes de la sidebar.
 - **EterTab** (facultatif) : affiche la quête suivie et le métier (`<tag_job>`) dans la sidebar.
 - **EterEconomy 2.2.2+** (son API `EconomyApi`) pour payer (sinon : « économie indisponible »).
 - Client 1.21.6+ pour les Dialogs (quantité, éditeur).
@@ -114,6 +114,9 @@ récupération). Chaque sortie d'une annonce passe par un `DELETE ... WHERE id =
 - **Retirer** une annonce depuis « Mes ventes » ; les **expirées** (`duration-hours`) passent dans la boîte de leur
   vendeur (tâche chaque minute, sur chaque serveur, sans doublon grâce au `DELETE`).
 - **Boîte de récupération** : invendus, annonces retirées, achats sans place. Un colis ne se prend que s'il rentre.
+  **Joueur parti pendant l'opération** (EterLib `Tasks` avec `offline`) : l'objet acheté, retiré, refusé à la vente ou
+  sorti de la boîte y est remis (raison `returned`) au lieu d'être perdu ; un achat en boutique est remboursé (et le
+  stock rendu).
 - **Recherche** par nom d'objet ou de matière ; clic droit sur la loupe pour l'effacer.
 
 ## Stock commun (`module/stock`)

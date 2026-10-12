@@ -276,3 +276,4 @@ auction:
       expired: "<dark_gray>▸ <info>Invendu"
       cancelled: "<dark_gray>▸ <info>Annonce retirée"
       bought: "<dark_gray>▸ <info>Acheté (pas de place)"
+      returned: "<dark_gray>▸ <info>Rendu (tu étais parti)"

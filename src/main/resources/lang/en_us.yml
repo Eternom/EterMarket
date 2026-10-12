@@ -276,3 +276,4 @@ auction:
       expired: "<dark_gray>▸ <info>Unsold"
       cancelled: "<dark_gray>▸ <info>Listing removed"
       bought: "<dark_gray>▸ <info>Bought (no room)"
+      returned: "<dark_gray>▸ <info>Returned (you had left)"

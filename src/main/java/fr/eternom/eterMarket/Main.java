@@ -37,7 +37,7 @@ import java.time.ZoneId;
 public final class Main extends JavaPlugin {
 
     /** Version minimale d'EterLib : étiquettes du joueur (getPlayerTags) depuis 1.7.0. */
-    private static final String REQUIRED_ETERLIB = "1.10.0";
+    private static final String REQUIRED_ETERLIB = "1.12.1";
 
     /** Préfixe des tables d'EterMarket dans la base commune : etermarket_npcs, etermarket_stock... */
     private static final String TABLE_PREFIX = "etermarket_";

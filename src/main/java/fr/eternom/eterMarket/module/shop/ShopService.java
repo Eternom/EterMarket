@@ -17,6 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Achat dans une boutique (les boutiques ne rachètent rien). Ordre, pour ne jamais rien donner ni prendre à tort :
@@ -76,7 +77,18 @@ public class ShopService {
                 case NOT_ENOUGH -> messages.send(player, "shop.not-enough", "price", economy.format(total));
             }
             after.run();
-        }, () -> messages.send(player, "error.generic"));
+        }, () -> messages.send(player, "error.generic"), result -> {
+            if (result == Result.OK) {
+                // Payé, mais parti avant de recevoir les objets : remboursé (et le stock rendu)
+                UUID uuid = player.getUniqueId();
+                Tasks.async(plugin, () -> {
+                    economy.deposit(uuid, total, "EterMarket · boutique");
+                    if (fromStock) {
+                        stock.add(material, units);
+                    }
+                }, "Achat non remboursé à " + uuid + " (" + total + ")");
+            }
+        });
     }
 
     /** lots fois l'objet, en piles de taille normale. */

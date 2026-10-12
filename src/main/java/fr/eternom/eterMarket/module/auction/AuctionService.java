@@ -132,7 +132,11 @@ public class AuctionService {
                 }
             }
             after.run();
-        }, () -> give(player, item));
+        }, () -> give(player, item), result -> {
+            if (result != Result.OK) {
+                keep(uuid, item, "returned"); // parti avant le retour : l'objet attend dans sa boîte
+            }
+        });
     }
 
     /** Thread principal : achète une annonce. */
@@ -169,7 +173,12 @@ public class AuctionService {
                 default -> messages.send(player, "auction.gone");
             }
             after.run();
-        }, () -> messages.send(player, "error.generic"));
+        }, () -> messages.send(player, "error.generic"), result -> {
+            if (result == Result.OK) {
+                keep(player.getUniqueId(), listing.item(), "bought"); // payé, mais parti : l'objet attend dans sa boîte
+                notifySold(listing.seller(), itemName(listing.item()), economy.format(toSeller));
+            }
+        });
     }
 
     /** Thread principal : retire sa propre annonce (l'objet revient). */
@@ -183,7 +192,11 @@ public class AuctionService {
                 messages.send(player, "auction.gone");
             }
             after.run();
-        }, () -> messages.send(player, "error.generic"));
+        }, () -> messages.send(player, "error.generic"), cancelled -> {
+            if (cancelled) {
+                keep(uuid, listing.item(), "cancelled");
+            }
+        });
     }
 
     /** Thread principal : prend un colis de la boîte de récupération. */
@@ -199,7 +212,11 @@ public class AuctionService {
                 player.playSound(player, Sound.ENTITY_ITEM_PICKUP, 0.6f, 1f);
             }
             after.run();
-        }, () -> messages.send(player, "error.generic"));
+        }, () -> messages.send(player, "error.generic"), taken -> {
+            if (taken) {
+                keep(uuid, parcel.item(), "returned"); // retiré de la boîte, mais parti : remis dedans
+            }
+        });
     }
 
     /** Dans l'inventaire s'il y a la place, sinon dans la boîte de récupération (avec un message). */
@@ -211,6 +228,11 @@ public class AuctionService {
         UUID uuid = player.getUniqueId();
         Tasks.async(plugin, () -> repository.deposit(uuid, item, reason), "Objet non déposé dans la boîte de " + player.getName());
         messages.send(player, "auction.to-collection");
+    }
+
+    /** Met un objet dans la boîte de récupération (joueur parti avant de le recevoir). */
+    private void keep(UUID owner, ItemStack item, String reason) {
+        Tasks.async(plugin, () -> repository.deposit(owner, item, reason), "Objet non déposé dans la boîte de " + owner);
     }
 
     /** Le vendeur est prévenu où qu'il soit sur le réseau. */
