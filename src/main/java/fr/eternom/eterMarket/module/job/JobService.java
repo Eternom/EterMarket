@@ -1,15 +1,15 @@
 package fr.eternom.eterMarket.module.job;
 
-import fr.eternom.eterMarket.api.JobQuestCompleteEvent;
-import org.bukkit.Bukkit;
+import fr.eternom.eterEconomy.api.EconomyApi;
 import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
+import fr.eternom.eterMarket.api.JobQuestCompleteEvent;
 import fr.eternom.eterMarket.module.job.JobRepository.Member;
 import fr.eternom.eterMarket.module.job.JobRepository.Quest;
 import fr.eternom.eterMarket.module.job.JobRepository.Template;
 import fr.eternom.eterMarket.module.stock.StockRepository;
-import fr.eternom.eterEconomy.api.EconomyApi;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.command.CommandSender;
@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
 
 /**
  * La guilde des métiers. Un seul métier à la fois : le premier est gratuit, en changer coûte `change-cost` et n'est
@@ -65,9 +66,9 @@ public class JobService {
     private final QuestTexts texts;
     private final JobProgress progress;
     /** Met un objet de côté pour un joueur parti (la boîte de récupération de l'hôtel des ventes). Bloquant. */
-    private java.util.function.BiConsumer<UUID, ItemStack> keep = (uuid, item) -> { };
+    private BiConsumer<UUID, ItemStack> keep = (uuid, item) -> { };
 
-    public void setKeep(java.util.function.BiConsumer<UUID, ItemStack> keep) {
+    public void setKeep(BiConsumer<UUID, ItemStack> keep) {
         this.keep = keep;
     }
 
@@ -367,7 +368,7 @@ public class JobService {
 
     /** Les objets d'une quête en piles normales. */
     private static List<ItemStack> stacks(List<Objective> items) {
-        List<ItemStack> stacks = new java.util.ArrayList<>();
+        List<ItemStack> stacks = new ArrayList<>();
         for (Objective item : items) {
             int remaining = item.amount();
             while (remaining > 0) {

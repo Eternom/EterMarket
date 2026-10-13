@@ -26,7 +26,7 @@ dependencies {
     // Socle commun : base, Redis, langues, menus (plugin EterLib installé sur le serveur)
     compileOnly("com.github.Eternom:EterLib:1.12.1")
     // PNJ : apparition, regard, emplacements (plugin EterNpc installé sur le serveur)
-    compileOnly("com.github.Eternom:EterNpc:1.0.0")
+    compileOnly("com.github.Eternom:EterNpc:1.1.0")
     // Argent : l'API d'EterEconomy (chaque mouvement avec sa source)
     compileOnly("com.github.Eternom:EterEconomy:2.2.2")
 }

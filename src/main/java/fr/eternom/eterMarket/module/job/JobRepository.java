@@ -3,6 +3,7 @@ package fr.eternom.eterMarket.module.job;
 import fr.eternom.eterLib.helper.sql.Column;
 import fr.eternom.eterLib.helper.sql.Database;
 import fr.eternom.eterLib.helper.sql.Row;
+import fr.eternom.eterMarket.api.MarketApi;
 import org.bukkit.Material;
 
 import java.util.ArrayList;
@@ -157,10 +158,10 @@ public class JobRepository {
     }
 
     /** Classement des quêtes validées (total de chaque joueur). */
-    public List<fr.eternom.eterMarket.api.MarketApi.Ranked> topCompleted(int limit) {
+    public List<MarketApi.Ranked> topCompleted(int limit) {
         return database.query("SELECT uuid, completed FROM " + database.table(MEMBERS)
                         + " WHERE completed > 0 ORDER BY completed DESC LIMIT ?", limit).stream()
-                .map(row -> new fr.eternom.eterMarket.api.MarketApi.Ranked(row.getUUID("uuid"), row.getLong("completed")))
+                .map(row -> new MarketApi.Ranked(row.getUUID("uuid"), row.getLong("completed")))
                 .toList();
     }
 

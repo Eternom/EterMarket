@@ -141,8 +141,9 @@ public class NpcService {
 
     /** Retire l'emplacement le plus proche (la définition reste, ainsi que ses autres emplacements). */
     public void removeNearest(Player admin) {
-        api.removeNearest(admin.getLocation(), REMOVE_RADIUS, removed -> removed.ifPresentOrElse(
-                npcId -> messages.send(admin, "npc.removed", "npc", npcId.startsWith(PREFIX) ? npcId.substring(PREFIX.length()) : npcId),
+        // Seulement les PNJ d'EterMarket : pas une place du podium ou le PNJ d'un autre plugin
+        api.removeNearest(admin.getLocation(), REMOVE_RADIUS, npcId -> npcId.startsWith(PREFIX), removed -> removed.ifPresentOrElse(
+                npcId -> messages.send(admin, "npc.removed", "npc", npcId.substring(PREFIX.length())),
                 () -> messages.send(admin, "npc.none-near", "radius", String.valueOf((int) REMOVE_RADIUS))));
     }
 
