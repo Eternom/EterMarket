@@ -3,6 +3,7 @@ package fr.eternom.eterMarket.module.job;
 import fr.eternom.eterEconomy.api.EconomyApi;
 import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.helper.message.Messages;
+import fr.eternom.eterLib.helper.gui.Sounds;
 import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.api.JobQuestCompleteEvent;
 import fr.eternom.eterMarket.module.job.JobRepository.Member;
@@ -156,13 +157,13 @@ public class JobService {
         Quest quest = progress.current(player.getUniqueId(), shown);
         if (!quest.actionComplete()) {
             messages.send(player, "quest.action-missing");
-            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 0.6f, 1f);
+            Sounds.refuse(player);
             return;
         }
         List<Objective> items = quest.items();
         if (items.stream().anyMatch(item -> count(player.getInventory(), item.material()) < item.amount())) {
             messages.send(player, "quest.missing");
-            player.playSound(player, Sound.ENTITY_VILLAGER_NO, 0.6f, 1f);
+            Sounds.refuse(player);
             return;
         }
         items.forEach(item -> take(player.getInventory(), item.material(), item.amount()));

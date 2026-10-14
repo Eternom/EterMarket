@@ -14,7 +14,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
@@ -69,7 +68,7 @@ class ShopMenu implements Menu {
         ShopItem item = itemAtSlot.get(slot);
         if (item != null) {
             if (soldOut(item)) {
-                player.playSound(player, Sound.ENTITY_VILLAGER_NO, 0.6f, 1f);
+                Sounds.refuse(player);
             } else if (click.isRightClick()) {
                 Sounds.click(player);
                 gui.askQuantity(player, view, item, page);

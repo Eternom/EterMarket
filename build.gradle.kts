@@ -24,7 +24,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:26.2.build.129-stable")
 
     // Socle commun : base, Redis, langues, menus (plugin EterLib installé sur le serveur)
-    compileOnly("com.github.Eternom:EterLib:1.12.1")
+    compileOnly("com.github.Eternom:EterLib:1.15.0")
     // PNJ : apparition, regard, emplacements (plugin EterNpc installé sur le serveur)
     compileOnly("com.github.Eternom:EterNpc:1.1.0")
     // Argent : l'API d'EterEconomy (chaque mouvement avec sa source)

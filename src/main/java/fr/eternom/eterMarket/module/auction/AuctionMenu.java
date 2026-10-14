@@ -12,7 +12,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
@@ -72,7 +71,7 @@ class AuctionMenu implements Menu {
         Listing listing = listingAtSlot.get(slot);
         if (listing != null) {
             if (listing.seller().equals(player.getUniqueId())) {
-                player.playSound(player, Sound.ENTITY_VILLAGER_NO, 0.6f, 1f);
+                Sounds.refuse(player);
                 return;
             }
             Sounds.click(player);

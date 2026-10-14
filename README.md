@@ -7,7 +7,7 @@ Document développeur, à tenir à jour avec le code.
 
 ## Prérequis
 
-- **EterLib 1.12.1+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes de la sidebar.
+- **EterLib 1.15.0+** (`depend`) : base, Redis et bus réseau, langues et textes communs, menus (cadre, Dialogs), économie (`Money`), sidebar temporaire, étiquettes de la sidebar.
 - **EterNpc 1.1.0+** (`depend`) : les PNJ (Mannequins, emplacements, clics).
 - **EterTab** (facultatif) : affiche la quête suivie et le métier (`<tag_job>`) dans la sidebar.
 - **EterEconomy 2.2.2+** (son API `EconomyApi`) pour payer (sinon : « économie indisponible »).
