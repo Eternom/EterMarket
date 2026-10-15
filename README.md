@@ -104,6 +104,9 @@ récupération). Chaque sortie d'une annonce passe par un `DELETE ... WHERE id =
 - **Vendre** l'objet en main (prix dans un Dialog) : l'objet quitte la main tout de suite → limite d'annonces
   (`etermarket.auction.listings.<n>`, sinon `default-listings`) → frais de mise en vente (`listing-fee`, 1 Helok
   minimum) → annonce écrite. Au moindre refus, l'objet est rendu. Prix entre `min-price` et `max-price`.
+  **Acheter** demande `auction.min-buy-playtime-hours` (5) heures de jeu actif (`BuyGate`, `SuccessApi#playtimeMinutes` d'EterSuccess
+  1.5.0+) : un second compte ne passe pas son argent au principal en achetant très cher un objet sans valeur. Le menu
+  l'affiche (tête du joueur et chaque annonce : « Achats après 5 h de jeu : encore … »).
 - **Acheter** (confirmation) : l'acheteur paie → l'annonce est réservée ; perdue = acheteur remboursé. Le vendeur
   reçoit le prix moins `tax`, même hors ligne, et est prévenu où qu'il soit (`notify` du bus réseau, canal `etermarket`).
 - **Retirer** une annonce depuis « Mes ventes » ; les **expirées** (`duration-hours`) passent dans la boîte de leur

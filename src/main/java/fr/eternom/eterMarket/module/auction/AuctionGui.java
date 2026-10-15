@@ -28,7 +28,9 @@ import java.util.Locale;
 public class AuctionGui {
 
     /** Ce qu'affiche le menu principal. filter : recherche en cours (minuscules), ou null. */
-    record Browse(List<Listing> listings, String filter, double balance, int ownListings, int limit, int parcels) {
+    /** buyWait : minutes de jeu encore nécessaires avant d'acheter (0 : permis), buyHours : le seuil. */
+    record Browse(List<Listing> listings, String filter, double balance, int ownListings, int limit, int parcels,
+                  long buyWait, long buyHours) {
     }
 
     private final JavaPlugin plugin;
@@ -57,7 +59,8 @@ public class AuctionGui {
                     .filter(listing -> filter == null || matches(listing.item(), filter))
                     .toList();
             return new Browse(listings, filter, economy == null ? 0 : economy.balance(player.getUniqueId()),
-                    repository.countBySeller(player.getUniqueId()), limit, repository.countCollection(player.getUniqueId()));
+                    repository.countBySeller(player.getUniqueId()), limit, repository.countCollection(player.getUniqueId()),
+                    service.buyWait(player.getUniqueId()), service.buyMinHours());
         }, browse -> player.openInventory(new AuctionMenu(this, player, browse, page).getInventory()),
                 () -> messages.send(player, "error.generic"));
     }

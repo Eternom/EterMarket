@@ -1,5 +1,6 @@
 package fr.eternom.eterMarket.module.auction;
 
+import fr.eternom.eterLib.EterLib;
 import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.helper.gui.Frame;
 import fr.eternom.eterLib.helper.gui.Items;
@@ -128,6 +129,15 @@ class AuctionMenu implements Menu {
                 text("auction.menu.balance", "amount", Money.format(browse.balance())),
                 text("auction.menu.listings", "count", String.valueOf(browse.ownListings()), "limit", String.valueOf(browse.limit())),
                 text("auction.menu.parcels", "count", String.valueOf(browse.parcels())))));
+        if (browse.buyWait() > 0) {
+            // Nouveau joueur : il voit les annonces, mais sait tout de suite pourquoi il ne peut pas encore acheter
+            ItemStack head = inventory.getItem(INFO);
+            List<Component> lore = new ArrayList<>(head.lore());
+            lore.add(Component.empty());
+            lore.add(lockedLine());
+            head.lore(lore);
+            inventory.setItem(INFO, head);
+        }
 
         int start = page * SLOTS.size();
         List<Listing> listings = browse.listings();
@@ -166,9 +176,16 @@ class AuctionMenu implements Menu {
         lore.add(text("auction.item.price", "price", Money.format(listing.price())));
         lore.add(text("auction.item.seller", "seller", listing.sellerName()));
         lore.add(text("auction.item.time", "time", gui.timeLeft(viewer, listing)));
-        lore.add(text(listing.seller().equals(viewer.getUniqueId()) ? "auction.item.yours" : "auction.item.buy"));
+        lore.add(listing.seller().equals(viewer.getUniqueId()) ? text("auction.item.yours")
+                : browse.buyWait() > 0 ? lockedLine() : text("auction.item.buy"));
         display.lore(lore.stream().map(line -> line.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)).toList());
         return display;
+    }
+
+    /** « Achat après 5 h de jeu : encore 3 h 12 min ». */
+    private Component lockedLine() {
+        return text("auction.menu.locked", "hours", String.valueOf(browse.buyHours()),
+                "time", EterLib.get().formatDuration(viewer, browse.buyWait() * 60));
     }
 
     private Component pageLine(int shown) {

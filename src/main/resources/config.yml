@@ -57,6 +57,9 @@ auction:
   max-price: 1000000
   # Annonces en même temps par joueur ; plus avec la permission etermarket.auction.listings.<n>.
   default-listings: 5
+  # Acheter seulement après ce temps de jeu actif (heures, /stats d'EterSuccess) : un second compte ne peut pas passer
+  # son argent au compte principal en achetant très cher un objet sans valeur. 0 : pas de limite.
+  min-buy-playtime-hours: 5
 
 # Menus : bouton en bas du menu. Avec une commande (sans le /), il la lance pour le joueur et relie
 # les menus entre eux (ex : "profile" pour revenir au menu du profil) ; vide, il ferme le menu.

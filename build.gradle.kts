@@ -25,6 +25,8 @@ dependencies {
 
     // Socle commun : base, Redis, langues, menus (plugin EterLib installé sur le serveur)
     compileOnly("com.github.Eternom:EterLib:1.15.0")
+    // Temps de jeu (SuccessApi) : achats à l'hôtel des ventes réservés aux joueurs qui ont assez joué (softdepend)
+    compileOnly("com.github.Eternom:EterSuccess:1.5.0")
     // PNJ : apparition, regard, emplacements (plugin EterNpc installé sur le serveur)
     compileOnly("com.github.Eternom:EterNpc:1.1.0")
     // Argent : l'API d'EterEconomy (chaque mouvement avec sa source)

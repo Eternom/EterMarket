@@ -1,7 +1,9 @@
 package fr.eternom.eterMarket.module.auction;
 
+import fr.eternom.eterLib.EterLib;
 import fr.eternom.eterLib.helper.economy.Money;
 import fr.eternom.eterLib.helper.cache.NetworkBus;
+import fr.eternom.eterLib.helper.gui.Sounds;
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
 import fr.eternom.eterMarket.api.AuctionSaleEvent;
@@ -34,13 +36,15 @@ public class AuctionService {
     public static final String LISTINGS_PERMISSION = "etermarket.auction.listings.";
 
     /** Réglages (config.yml > auction). fee et tax : fractions (0.01 = 1 %). */
-    public record Settings(Duration duration, double fee, double tax, double minPrice, double maxPrice, int defaultListings) {
+    public record Settings(Duration duration, double fee, double tax, double minPrice, double maxPrice, int defaultListings,
+                           double minBuyPlaytimeHours) {
     }
 
-    private enum Result { OK, LIMIT, NOT_ENOUGH, GONE }
+    private enum Result { OK, LIMIT, NOT_ENOUGH, GONE, TOO_NEW }
 
     private final JavaPlugin plugin;
     private final AuctionRepository repository;
+    private final BuyGate buyGate;
     private final Settings settings;
     private final NetworkBus bus;
     private final Messages messages;
@@ -52,6 +56,16 @@ public class AuctionService {
         this.settings = settings;
         this.bus = bus;
         this.messages = messages;
+        this.buyGate = new BuyGate(settings.minBuyPlaytimeHours());
+    }
+
+    /** Minutes de jeu encore nécessaires avant de pouvoir acheter (0 : permis). Bloquant. */
+    long buyWait(UUID player) {
+        return buyGate.minutesLeft(player);
+    }
+
+    long buyMinHours() {
+        return buyGate.minMinutes() / 60;
     }
 
     /** Démarrage : expiration des annonces chaque minute. */
@@ -152,7 +166,12 @@ public class AuctionService {
             return;
         }
         double toSeller = economy.round(listing.price() * (1 - settings.tax()));
+        long[] wait = {0};
         Tasks.async(plugin, player, () -> {
+            wait[0] = buyGate.minutesLeft(player.getUniqueId());
+            if (wait[0] > 0) {
+                return Result.TOO_NEW;
+            }
             if (!economy.withdraw(player.getUniqueId(), listing.price(), "EterMarket · enchères")) {
                 return Result.NOT_ENOUGH;
             }
@@ -178,6 +197,11 @@ public class AuctionService {
                     Bukkit.getPluginManager().callEvent(new AuctionSaleEvent(player.getUniqueId(), listing.seller(), listing.item(), listing.price()));
                 }
                 case NOT_ENOUGH -> messages.send(player, "auction.not-enough", "price", economy.format(listing.price()));
+                case TOO_NEW -> {
+                    messages.send(player, "auction.too-new", "hours", String.valueOf(buyMinHours()),
+                            "time", EterLib.get().formatDuration(player, wait[0] * 60));
+                    Sounds.refuse(player);
+                }
                 default -> messages.send(player, "auction.gone");
             }
             after.run();

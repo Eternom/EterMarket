@@ -145,7 +145,8 @@ public final class Main extends JavaPlugin {
                 Math.clamp(getConfig().getDouble("auction.tax", 0.05), 0, 1),
                 Math.max(1, getConfig().getDouble("auction.min-price", 1)),
                 Math.max(1, getConfig().getDouble("auction.max-price", 1_000_000)),
-                Math.max(0, getConfig().getInt("auction.default-listings", 5)));
+                Math.max(0, getConfig().getInt("auction.default-listings", 5)),
+                getConfig().getDouble("auction.min-buy-playtime-hours", 5));
     }
 
     /** Fuseau du changement de jour des quêtes (jobs.time-zone), Europe/Paris si invalide. */
