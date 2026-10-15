@@ -173,9 +173,15 @@ public class JobService {
             if (!repository.complete(uuid, quest.slot(), quest.day(), quest.targets())) {
                 return null;
             }
-            items.forEach(item -> stock.add(item.material(), item.amount()));
-            economy.deposit(player.getUniqueId(), quest.reward(), "EterMarket · métiers");
-            repository.addCompleted(uuid);
+            // Validée : les objets sont livrés. Une erreur après ce point ne doit plus les rendre (sinon, duplication)
+            try {
+                items.forEach(item -> stock.add(item.material(), item.amount()));
+                economy.deposit(player.getUniqueId(), quest.reward(), "EterMarket · métiers");
+                repository.addCompleted(uuid);
+            } catch (RuntimeException e) {
+                plugin.getLogger().severe("Quête validée pour " + uuid + " mais suite incomplète (stock, récompense "
+                        + quest.reward() + ", compteur) : " + e.getMessage());
+            }
             return repository.member(uuid).map(JobRepository.Member::job).orElse("");
         }, job -> {
             if (job == null) {

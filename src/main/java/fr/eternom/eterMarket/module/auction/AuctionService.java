@@ -160,7 +160,13 @@ public class AuctionService {
                 economy.deposit(player.getUniqueId(), listing.price(), "EterMarket · enchères"); // quelqu'un l'a eue avant : remboursé
                 return Result.GONE;
             }
-            economy.deposit(listing.seller(), toSeller, "EterMarket · enchères");
+            try {
+                economy.deposit(listing.seller(), toSeller, "EterMarket · enchères");
+            } catch (RuntimeException e) {
+                // L'acheteur a payé et l'annonce est à lui : il reçoit l'objet ; le vendeur est à payer à la main (console)
+                plugin.getLogger().severe("Vendeur " + listing.sellerName() + " (" + listing.seller() + ") non payé pour l'annonce "
+                        + listing.id() + " : " + toSeller + " à verser (" + e.getMessage() + ")");
+            }
             return Result.OK;
         }, result -> {
             switch (result) {
