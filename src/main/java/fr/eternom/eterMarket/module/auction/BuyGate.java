@@ -1,14 +1,13 @@
 package fr.eternom.eterMarket.module.auction;
 
-import fr.eternom.eterSuccess.api.SuccessApi;
-import org.bukkit.Bukkit;
+import fr.eternom.eterLib.helper.ranking.RankingSource;
 
 import java.util.UUID;
 
 /**
  * Acheter à l'hôtel des ventes seulement après assez de jeu (auction.min-buy-playtime-hours, temps de jeu actif de
- * /stats d'EterSuccess) : un second compte ne peut pas « acheter » très cher un objet sans valeur au compte principal
- * pour lui passer ses récompenses. Sans EterSuccess sur ce serveur, pas de limite.
+ * /stats d'EterSuccess, source playtime_total) : un second compte ne peut pas « acheter » très cher un objet sans
+ * valeur au compte principal pour lui passer ses récompenses. Sans EterSuccess sur ce serveur, pas de limite.
  */
 final class BuyGate {
 
@@ -24,10 +23,12 @@ final class BuyGate {
 
     /** Minutes de jeu encore nécessaires (0 : achat permis). Bloquant (base). */
     long minutesLeft(UUID player) {
-        if (minMinutes <= 0 || !Bukkit.getPluginManager().isPluginEnabled("EterSuccess")) {
+        // Lu par EterLib (source playtime_total d'EterSuccess) : EterSuccess dépend déjà de ce plugin, pas l'inverse
+        var source = RankingSource.find("playtime_total");
+        if (minMinutes <= 0 || source.isEmpty()) {
             return 0;
         }
-        long played = SuccessApi.get().map(api -> api.playtimeMinutes(player)).orElse(minMinutes);
+        long played = source.get().of(player)[1];
         return Math.max(0, minMinutes - played);
     }
 }
