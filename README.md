@@ -54,7 +54,8 @@ facile, normale, difficile), une récompense et des **objectifs** (`Objective`, 
 - `KILL`, `BREAK`, `FISH` : tuer, casser, pêcher, **jusqu'à 3 actions par quête** (`MAX_ACTIONS`, un compteur chacune :
   colonnes `progress`, `progress_2`, `progress_3`), avec des objets (« tue 10 zombies, 10 squelettes, 10 araignées »,
   « casse 16 minerais de fer et rapporte 16 lingots »). Cible `ANY` : n'importe quel monstre / prise. Une même créature
-  compte pour chaque action qui lui correspond (« tuer des zombies » et « tuer des monstres »).
+  compte pour chaque action qui lui correspond (« tuer des zombies » et « tuer des monstres »). Un **minerai et sa version des
+  abîmes** comptent pareil pour `BREAK` (1.9.2 : `REDSTONE_ORE` accepte aussi `DEEPSLATE_REDSTONE_ORE`, et inversement).
 
 **Quêtes du jour** (`etermarket_job_daily`) : à minuit (`jobs.time-zone`), une quête par niveau de `daily`
 (facile, normale, difficile ; un niveau vide prend dans les autres), recopiées depuis le répertoire (le modifier ne

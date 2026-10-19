@@ -30,7 +30,7 @@ import java.util.UUID;
  * - tuer : seulement les créatures apparues naturellement (pas de spawner, d'œuf, d'élevage ni de commande), tuées
  *   par le joueur ;
  * - casser : pas un bloc posé par un joueur (retenu en mémoire sur ce serveur, les plus récents d'abord), et une
- *   culture seulement si elle est mûre ;
+ *   culture seulement si elle est mûre ; un minerai et sa version des abîmes comptent pareil ;
  * - aucune action en créatif ou spectateur.
  */
 public class JobProgressListener implements Listener {
@@ -96,8 +96,22 @@ public class JobProgressListener implements Listener {
         if (block.getBlockData() instanceof Ageable crop && crop.getAge() < crop.getMaximumAge()) {
             return;
         }
-        Material type = block.getType();
-        progress.record(event.getPlayer(), Kind.BREAK, objective -> objective.material() == type, 1);
+        Material type = oreFamily(block.getType());
+        progress.record(event.getPlayer(), Kind.BREAK, objective -> objective.material() != null
+                && oreFamily(objective.material()) == type, 1);
+    }
+
+    /**
+     * Un minerai et sa version des abîmes comptent pareil (« casse 6 minerais de redstone » : le normal ne se trouve plus
+     * qu'entre les couches 0 et 15, la version des abîmes partout en dessous). DEEPSLATE_X_ORE -> X_ORE ; autre bloc : lui-même.
+     */
+    static Material oreFamily(Material material) {
+        String name = material.name();
+        if (name.startsWith("DEEPSLATE_") && name.endsWith("_ORE")) {
+            Material ore = Material.getMaterial(name.substring("DEEPSLATE_".length()));
+            return ore == null ? material : ore;
+        }
+        return material;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
