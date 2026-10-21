@@ -206,6 +206,51 @@ catalog:
   reset: "<info>Quests and shop of <accent><job></accent> reset to the starting ones."
   reset-none: "<error>No starting quests for <accent><job></accent> (job added in the config): add them in the EterMarket code."
 
+# Staff management of a player's job: /market jobs player <player> (menu), /market jobs cooldown <player>.
+job-admin:
+  usage: '<error>Usage: <accent>/market jobs player \<player></accent> (job menu), <accent>/market jobs cooldown \<player></accent> (reset the change delay) or <accent>/market jobs reset \<job> confirm</accent> (<jobs>)'
+  title: "<primary>Job: <player>"
+  online: "<dark_gray>▸ <success>Online <dark_gray>(<server>)"
+  offline: "<dark_gray>▸ <info>Offline"
+  job-none: "<dark_gray>▸ <info>Job: <dark_gray>none"
+  changed: "<dark_gray>▸ <info>Last change: <accent><time></accent> ago"
+  wait: "<dark_gray>▸ <info>Can change in <accent><time>"
+  wait-none: "<dark_gray>▸ <info>Can change: <success>now"
+  rank: "<dark_gray>▸ <info>Rank: <accent>#<rank>"
+  quests-none: "<info>No quests yet today"
+  quests-none-lore: "<dark_gray>Drawn on their next NPC visit or login"
+  no-job: "<error><accent><player></accent> has no job."
+  set-job:
+    name: "<accent>Change job"
+    lore: "<info>Free; their change delay starts over"
+    title: "<primary>New job: <player>"
+    job: "<accent><job>"
+    current: "<dark_gray>Their current job"
+    click: "<accent>Click <dark_gray>· <info>give them this job"
+  cooldown:
+    name: "<accent>Reset the delay"
+    lore: "<info>They can change job right away (paying)"
+  quests:
+    name: "<accent>New daily quests"
+    lore: "<info>Clears their daily quests: new ones are drawn"
+  reroll:
+    name: "<accent>Give back the quest change"
+    lore: "<info>They can change a quest again today"
+  completed:
+    name: "<accent>Completed quests: <count>"
+    lore: "<info>Left click +1 <dark_gray>· <info>right click -1 <dark_gray>· <info>Shift: ±10"
+  remove:
+    name: "<error>Remove the job"
+    lore: "<info>Clears everything; their next job will be free"
+    title: "<primary>Remove <player>'s job?"
+    body: "Their job, daily quests and <count> completed quests are cleared. Their next job will be free."
+    confirm: "Remove"
+  done-job: "<success><accent><player></accent>'s job: <accent><job></accent>."
+  done-cooldown: "<success>Delay reset: <accent><player></accent> can change job."
+  done-quests: "<success><accent><player></accent>'s daily quests cleared."
+  done-reroll: "<success>Quest change given back to <accent><player></accent>."
+  done-remove: "<success><accent><player></accent>'s job removed."
+
 auction:
   hold-item: "<error>Hold the item to sell."
   price-invalid: "<error>Invalid price."

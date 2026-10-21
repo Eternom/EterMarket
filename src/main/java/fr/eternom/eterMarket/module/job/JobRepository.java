@@ -157,6 +157,38 @@ public class JobRepository {
         database.delete(DAILY, Map.of("uuid", player));
     }
 
+    // ---------- Administration (/market jobs player) ----------
+
+    /** Métier choisi par un admin : gratuit, le délai de changement repart de maintenant. */
+    public void adminSetJob(UUID player, String job) {
+        setJob(player, job, System.currentTimeMillis());
+    }
+
+    /** Le joueur peut changer de métier tout de suite (en payant le changement). */
+    public void resetCooldown(UUID player) {
+        database.update(MEMBERS, Map.of("changed_at", 0L), Map.of("uuid", player));
+    }
+
+    /** Efface ses quêtes du jour : de nouvelles sont tirées à sa prochaine visite (ou reconnexion). */
+    public void clearQuests(UUID player) {
+        database.delete(DAILY, Map.of("uuid", player));
+    }
+
+    /** Rend le changement de quête du jour. */
+    public void clearReroll(UUID player) {
+        database.execute("UPDATE " + database.table(MEMBERS) + " SET reroll_day = NULL WHERE uuid = ?", player);
+    }
+
+    public void setCompleted(UUID player, int completed) {
+        database.update(MEMBERS, Map.of("completed", Math.max(0, completed)), Map.of("uuid", player));
+    }
+
+    /** Efface tout (métier, quêtes, quêtes accomplies) : son prochain métier sera gratuit. */
+    public void removeMember(UUID player) {
+        database.delete(DAILY, Map.of("uuid", player));
+        database.delete(MEMBERS, Map.of("uuid", player));
+    }
+
     /** Classement des quêtes validées (total de chaque joueur). */
     public List<MarketApi.Ranked> topCompleted(int limit) {
         return database.query("SELECT uuid, completed FROM " + database.table(MEMBERS)

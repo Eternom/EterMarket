@@ -2,11 +2,13 @@ package fr.eternom.eterMarket.module.npc;
 
 import fr.eternom.eterLib.helper.message.Messages;
 import fr.eternom.eterLib.helper.task.Tasks;
+import fr.eternom.eterMarket.module.job.JobAdmin;
 import fr.eternom.eterMarket.module.job.JobService;
 import fr.eternom.eterMarket.module.job.Jobs;
 import fr.eternom.eterMarket.module.npc.NpcRepository.Role;
 import fr.eternom.eterMarket.module.shop.ShopGui;
 import fr.eternom.eterMarket.module.shop.ShopRepository;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
@@ -21,7 +23,8 @@ import java.util.stream.Stream;
 /**
  * /market (staff, etermarket.admin) :
  * create <pnj> [job <métier> | auction] · place <pnj> · remove (le plus proche) · edit <pnj> · delete <pnj> confirm · list · reload
- * · jobs reset <métier> confirm (remet les quêtes et la boutique de départ du métier).
+ * · jobs reset <métier> confirm (remet les quêtes et la boutique de départ du métier)
+ * · jobs player <joueur> (menu de gestion de son métier) · jobs cooldown <joueur> (délai de changement remis à zéro).
  */
 public class MarketCommand implements TabExecutor {
 
@@ -32,13 +35,15 @@ public class MarketCommand implements TabExecutor {
     private final ShopRepository shopRepository;
     private final JavaPlugin plugin;
     private final JobService jobService;
+    private final JobAdmin jobAdmin;
     private final Jobs jobs;
     private final Messages messages;
 
     public MarketCommand(JavaPlugin plugin, NpcService npcs, ShopGui shops, ShopRepository shopRepository, JobService jobService,
-                         Messages messages) {
+                         JobAdmin jobAdmin, Messages messages) {
         this.plugin = plugin;
         this.jobService = jobService;
+        this.jobAdmin = jobAdmin;
         this.npcs = npcs;
         this.shops = shops;
         this.shopRepository = shopRepository;
@@ -79,7 +84,7 @@ public class MarketCommand implements TabExecutor {
                     shops.openEditor(player, id, 0);
                 }
             }
-            case "jobs" -> resetJob(sender, args);
+            case "jobs" -> jobs(sender, args);
             case "remove" -> {
                 if (sender instanceof Player player) {
                     npcs.removeNearest(player);
@@ -90,6 +95,22 @@ public class MarketCommand implements TabExecutor {
             default -> messages.send(sender, "npc.usage");
         }
         return true;
+    }
+
+    /** jobs reset <métier> confirm · jobs player <joueur> · jobs cooldown <joueur>. */
+    private void jobs(CommandSender sender, String[] args) {
+        String sub = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
+        if (sub.equals("reset")) {
+            resetJob(sender, args);
+        } else if (args.length < 3 || !List.of("player", "cooldown").contains(sub)) {
+            messages.send(sender, "job-admin.usage", "jobs", String.join(", ", jobs.icons().keySet()));
+        } else if (sub.equals("cooldown")) {
+            jobAdmin.resetCooldown(sender, args[2]);
+        } else if (sender instanceof Player player) {
+            jobAdmin.open(player, args[2]);
+        } else {
+            messages.send(sender, "command.players-only");
+        }
     }
 
     /**
@@ -156,10 +177,13 @@ public class MarketCommand implements TabExecutor {
             return filter(jobs.icons().keySet().stream(), args[3]);
         }
         if (action.equals("jobs")) {
+            boolean reset = args.length > 2 && args[1].equalsIgnoreCase("reset");
             return switch (args.length) {
-                case 2 -> filter(Stream.of("reset"), args[1]);
-                case 3 -> filter(jobs.icons().keySet().stream(), args[2]);
-                case 4 -> filter(Stream.of("confirm"), args[3]);
+                case 2 -> filter(Stream.of("reset", "player", "cooldown"), args[1]);
+                case 3 -> reset ? filter(jobs.icons().keySet().stream(), args[2])
+                        : Bukkit.getOnlinePlayers().stream().map(Player::getName)
+                        .filter(name -> name.toLowerCase(Locale.ROOT).startsWith(args[2].toLowerCase(Locale.ROOT))).toList();
+                case 4 -> reset ? filter(Stream.of("confirm"), args[3]) : List.of();
                 default -> List.of();
             };
         }

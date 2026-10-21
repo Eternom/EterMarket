@@ -10,6 +10,7 @@ import fr.eternom.eterMarket.listeners.Events;
 import fr.eternom.eterMarket.module.auction.AuctionGui;
 import fr.eternom.eterMarket.module.auction.AuctionRepository;
 import fr.eternom.eterMarket.module.auction.AuctionService;
+import fr.eternom.eterMarket.module.job.JobAdmin;
 import fr.eternom.eterMarket.module.job.JobGui;
 import fr.eternom.eterMarket.module.job.JobRepository;
 import fr.eternom.eterMarket.module.job.JobService;
@@ -47,6 +48,7 @@ public final class Main extends JavaPlugin {
     private ShopRepository shopRepository;
     private ShopGui shops;
     private JobGui jobGui;
+    private JobAdmin jobAdmin;
     private JobService jobService;
     private AuctionGui auctions;
 
@@ -78,6 +80,7 @@ public final class Main extends JavaPlugin {
         shops = new ShopGui(this, shopRepository, stock, new ShopService(this, stock, messages), npcs, jobRepository, messages,
                 lib.backButton(getConfig().getString("menus.shop.back-command", "")));
         jobService = new JobService(this, jobRepository, stock, jobs, messages, zone());
+        jobAdmin = new JobAdmin(this, jobService, jobRepository, messages, bus);
         jobGui = new JobGui(this, jobService, jobRepository, messages,
                 lib.backButton(getConfig().getString("menus.jobs.back-command", "")));
         // Boutiques et guilde se renvoient l'une à l'autre (onglets Quêtes / Boutique)
@@ -131,6 +134,10 @@ public final class Main extends JavaPlugin {
 
     public JobService getJobService() {
         return jobService;
+    }
+
+    public JobAdmin getJobAdmin() {
+        return jobAdmin;
     }
 
     public AuctionGui getAuctions() {

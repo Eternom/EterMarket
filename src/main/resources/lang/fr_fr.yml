@@ -206,6 +206,51 @@ catalog:
   reset: "<info>Quêtes et boutique de <accent><job></accent> remises à celles de départ."
   reset-none: "<error>Pas de quêtes de départ pour <accent><job></accent> (métier ajouté dans la config) : à ajouter dans le code d'EterMarket."
 
+# Gestion du métier d'un joueur par le staff : /market jobs player <joueur> (menu), /market jobs cooldown <joueur>.
+job-admin:
+  usage: '<error>Utilisation : <accent>/market jobs player \<joueur></accent> (menu de son métier), <accent>/market jobs cooldown \<joueur></accent> (délai de changement à zéro) ou <accent>/market jobs reset \<métier> confirm</accent> (<jobs>)'
+  title: "<primary>Métier : <player>"
+  online: "<dark_gray>▸ <success>En ligne <dark_gray>(<server>)"
+  offline: "<dark_gray>▸ <info>Hors ligne"
+  job-none: "<dark_gray>▸ <info>Métier : <dark_gray>aucun"
+  changed: "<dark_gray>▸ <info>Dernier changement : il y a <accent><time>"
+  wait: "<dark_gray>▸ <info>Peut changer dans <accent><time>"
+  wait-none: "<dark_gray>▸ <info>Peut changer : <success>maintenant"
+  rank: "<dark_gray>▸ <info>Classement : <accent><rank>ᵉ"
+  quests-none: "<info>Pas encore de quêtes aujourd'hui"
+  quests-none-lore: "<dark_gray>Tirées à sa prochaine visite au PNJ ou connexion"
+  no-job: "<error><accent><player></accent> n'a pas de métier."
+  set-job:
+    name: "<accent>Changer de métier"
+    lore: "<info>Gratuit ; son délai de changement repart de zéro"
+    title: "<primary>Nouveau métier : <player>"
+    job: "<accent><job>"
+    current: "<dark_gray>Son métier actuel"
+    click: "<accent>Clic <dark_gray>· <info>lui donner ce métier"
+  cooldown:
+    name: "<accent>Remettre le délai à zéro"
+    lore: "<info>Il pourra changer de métier tout de suite (en payant)"
+  quests:
+    name: "<accent>Nouvelles quêtes du jour"
+    lore: "<info>Efface ses quêtes du jour : de nouvelles sont tirées"
+  reroll:
+    name: "<accent>Rendre le changement de quête"
+    lore: "<info>Il pourra encore changer une quête aujourd'hui"
+  completed:
+    name: "<accent>Quêtes accomplies : <count>"
+    lore: "<info>Clic gauche +1 <dark_gray>· <info>clic droit -1 <dark_gray>· <info>Maj : ±10"
+  remove:
+    name: "<error>Retirer le métier"
+    lore: "<info>Efface tout ; son prochain métier sera gratuit"
+    title: "<primary>Retirer le métier de <player> ?"
+    body: "Son métier, ses quêtes du jour et ses <count> quêtes accomplies sont effacés. Son prochain métier sera gratuit."
+    confirm: "Retirer"
+  done-job: "<success>Métier de <accent><player></accent> : <accent><job></accent>."
+  done-cooldown: "<success>Délai remis à zéro : <accent><player></accent> peut changer de métier."
+  done-quests: "<success>Quêtes du jour de <accent><player></accent> effacées."
+  done-reroll: "<success>Changement de quête rendu à <accent><player></accent>."
+  done-remove: "<success>Métier de <accent><player></accent> retiré."
+
 auction:
   hold-item: "<error>Tiens en main l'objet à vendre."
   price-invalid: "<error>Prix invalide."

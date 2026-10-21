@@ -89,6 +89,14 @@ public class JobProgress {
         Tasks.async(plugin, () -> flush(uuid), "Progression des quêtes non enregistrée");
     }
 
+    /** Thread principal : métier ou quêtes changés par un admin, on relit tout en base en repartant de zéro. */
+    public void reload(Player player) {
+        UUID uuid = player.getUniqueId();
+        active.remove(uuid);
+        EterLib.get().getSidebars().clear(uuid, SIDEBAR_OWNER);
+        join(player);
+    }
+
     /**
      * Thread principal, après lecture des quêtes en base : remplace l'état, en gardant les progrès pas encore écrits et
      * la quête suivie choisie ici (son écriture en base peut arriver après cette lecture).
