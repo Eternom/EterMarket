@@ -1,5 +1,6 @@
 package fr.eternom.eterMarket.module.job;
 
+import fr.eternom.eterLib.EterLib;
 import fr.eternom.eterMarket.module.job.Objective.Kind;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -13,40 +14,30 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Compte les actions des quêtes (tuer, casser, pêcher) et charge les quêtes des joueurs qui se connectent.
  * Contre la triche (gameplay plus dur, pas plus facile) :
  * - tuer : seulement les créatures apparues naturellement (pas de spawner, d'œuf, d'élevage ni de commande), tuées
  *   par le joueur ;
- * - casser : pas un bloc posé par un joueur (retenu en mémoire sur ce serveur, les plus récents d'abord), et une
- *   culture seulement si elle est mûre ; un minerai et sa version des abîmes comptent pareil ;
+ * - casser : pas un bloc posé par un joueur (EterLib PlacedBlocks : noté dans le chunk, gardé après un redémarrage), et
+ *   une culture seulement si elle est mûre ; un minerai et sa version des abîmes comptent pareil ;
  * - aucune action en créatif ou spectateur.
  */
 public class JobProgressListener implements Listener {
-
-    /** Blocs posés retenus (les plus anciens sont oubliés au-delà). */
-    private static final int MAX_PLACED = 200_000;
 
     private static final Set<SpawnReason> NATURAL = Set.of(SpawnReason.NATURAL, SpawnReason.JOCKEY,
             SpawnReason.MOUNT, SpawnReason.PATROL, SpawnReason.RAID, SpawnReason.REINFORCEMENTS, SpawnReason.SLIME_SPLIT,
             SpawnReason.VILLAGE_INVASION, SpawnReason.LIGHTNING);
 
-    private record Placed(UUID world, long key) {
-    }
-
     private final JobProgress progress;
-    private final Set<Placed> placed = new LinkedHashSet<>();
 
     public JobProgressListener(JobProgress progress) {
         this.progress = progress;
@@ -74,23 +65,11 @@ public class JobProgressListener implements Listener {
                 ? enemy : entity.getType() == objective.entity(), 1);
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlace(BlockPlaceEvent event) {
-        Block block = event.getBlockPlaced();
-        if (block.getBlockData() instanceof Ageable) {
-            return; // une culture plantée ne compte que mûre : inutile de la retenir
-        }
-        Placed key = new Placed(block.getWorld().getUID(), block.getBlockKey());
-        placed.add(key);
-        if (placed.size() > MAX_PLACED) {
-            placed.remove(placed.iterator().next());
-        }
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    /** HIGH : après les protections (claims), avant qu'EterLib retire la note « posé » (MONITOR). */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
-        if (!counts(event.getPlayer()) || placed.remove(new Placed(block.getWorld().getUID(), block.getBlockKey()))) {
+        if (!counts(event.getPlayer()) || EterLib.get().getPlacedBlocks().isPlaced(block)) {
             return;
         }
         if (block.getBlockData() instanceof Ageable crop && crop.getAge() < crop.getMaximumAge()) {
